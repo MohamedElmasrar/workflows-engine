@@ -6,19 +6,30 @@ Decisions and their trade-offs are recorded in [`docs/adr`](../adr).
 ## 1. System context (C4 level 1)
 
 ```mermaid
-C4Context
-  title System context
-  Person(user, "Workflow author / operator", "Designs, runs and monitors workflows in a browser")
-  System_Ext(ext, "External system", "Calls webhooks; is called by HTTP Request nodes")
-  System(platform, "Workflow Automation Platform", "Designs, versions and durably executes workflow DAGs")
-  System_Ext(idp, "Keycloak", "OIDC identity provider")
-  System_Ext(smtp, "SMTP server (Mailpit in dev)", "Receives notification e-mails")
-  Rel(user, platform, "Uses", "HTTPS")
-  Rel(user, idp, "Logs in", "OIDC + PKCE")
-  Rel(ext, platform, "Sends webhooks", "HTTPS + HMAC")
-  Rel(platform, ext, "HTTP Request nodes", "HTTPS")
-  Rel(platform, idp, "Validates JWTs", "JWKS")
-  Rel(platform, smtp, "Notification nodes", "SMTP")
+flowchart LR
+  user("<b>Workflow Author / Operator</b><br/>Browser Client")
+  platform["<b>Workflow Automation Platform</b><br/>DAG Design & Durable Execution"]
+
+  subgraph external ["External Systems"]
+    direction TB
+    idp["<b>Keycloak</b><br/>OIDC Identity Provider"]
+    ext["<b>External System</b><br/>Webhooks & HTTP Targets"]
+    smtp["<b>SMTP Server</b><br/>Mailpit in Dev"]
+  end
+
+  user -->|Uses · HTTPS| platform
+  user -->|Logs in · OIDC + PKCE| idp
+  ext -->|Webhooks · HTTPS + HMAC| platform
+  platform -->|HTTP Nodes · HTTPS| ext
+  platform -->|Validates JWTs · JWKS| idp
+  platform -->|Notifications · SMTP| smtp
+
+  style user fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0c4a6e
+  style platform fill:#1d4ed8,stroke:#1e3a8a,stroke-width:2px,color:#ffffff
+  style external fill:#f8fafc,stroke:#cbd5e1,stroke-dasharray: 5 5,color:#475569
+  style idp fill:#ffffff,stroke:#94a3b8,stroke-width:1.5px,color:#1e293b
+  style ext fill:#ffffff,stroke:#94a3b8,stroke-width:1.5px,color:#1e293b
+  style smtp fill:#ffffff,stroke:#94a3b8,stroke-width:1.5px,color:#1e293b
 ```
 
 ## 2. Containers (C4 level 2)

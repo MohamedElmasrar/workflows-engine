@@ -23,7 +23,7 @@
         <module>packages/platform-support</module>
         <!--<module>services/api-gateway</module>-->
         <module>services/workflow-service</module>
-        <!--<module>services/execution-engine</module>-->
+        <module>services/execution-engine</module>
         <!--<module>services/worker-service</module>-->
         <!--<module>services/trigger-service</module>-->
     </modules>

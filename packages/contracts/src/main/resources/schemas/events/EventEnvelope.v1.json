@@ -1,0 +1,7 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "EventEnvelope", "type": "object", "additionalProperties": false,
+  "required": ["eventId","eventType","eventVersion","aggregateId","occurredAt","payload"],
+  "properties": {
+    "eventId": {"type":"string","format":"uuid"}, "eventType": {"type":"string","minLength":1},
+    "eventVersion": {"type":"integer","minimum":1}, "aggregateId": {"type":"string","minLength":1},
+    "correlationId": {"type":["string","null"]}, "causationId": {"type":["string","null"]},
+    "occurredAt": {"type":"string","format":"date-time"}, "payload": {"type":"object"} } }

@@ -1,0 +1,6 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "WorkflowExecutionRequested", "type": "object",
+  "required": ["executionId","workflowId","workflowVersion","triggerType","triggeredBy","input"],
+  "properties": {
+    "executionId": {"type":"string","format":"uuid"}, "workflowId": {"type":"string","format":"uuid"},
+    "workflowVersion": {"type":"integer","minimum":1}, "triggerType": {"enum":["MANUAL","WEBHOOK","SCHEDULE","RETRY"]},
+    "triggeredBy": {"type":"string"}, "input": {"type":"object"}, "idempotencyKey": {"type":["string","null"]} } }

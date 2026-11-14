@@ -1,0 +1,6 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "NodeExecutionStarted", "type": "object",
+  "required": ["executionId","nodeId","attemptId","workerId","startedAt"],
+  "properties": {
+    "executionId": {"type":"string","format":"uuid"}, "nodeId": {"type":"string"},
+    "attemptId": {"type":"string","format":"uuid"}, "workerId": {"type":"string"},
+    "startedAt": {"type":"string","format":"date-time"} } }

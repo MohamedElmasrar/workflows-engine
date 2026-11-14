@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workflowengine.io/schemas/workflow-definition.v1.json",
+  "title": "Workflow definition, schema version 1",
+  "description": "Structural contract for workflow graphs. Semantic rules (acyclicity, reachability, template references) are enforced by the workflow service graph validator.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "nodes", "edges"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "nodes": { "type": "array", "maxItems": 100, "items": { "$ref": "#/$defs/node" } },
+    "edges": { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/edge" } },
+    "settings": { "$ref": "#/$defs/settings" }
+  },
+  "$defs": {
+    "identifier": { "type": "string", "pattern": "^[A-Za-z][A-Za-z0-9_-]{0,63}$" },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "executionTimeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 86400 },
+        "maxConcurrentExecutions": { "type": "integer", "minimum": 1, "maximum": 50 }
+      }
+    },
+    "retryPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["maxAttempts"],
+      "properties": {
+        "maxAttempts": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "initialIntervalMs": { "type": "integer", "minimum": 100, "maximum": 3600000 },
+        "multiplier": { "type": "number", "minimum": 1, "maximum": 10 },
+        "maxIntervalMs": { "type": "integer", "minimum": 100, "maximum": 3600000 }
+      }
+    },
+    "edge": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source", "target"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "source": { "$ref": "#/$defs/identifier" },
+        "target": { "$ref": "#/$defs/identifier" },
+        "sourceHandle": { "type": ["string", "null"], "enum": ["true", "false", null] }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "name", "config"],
+      "properties": {
+        "id": { "$ref": "#/$defs/identifier" },
+        "type": {
+          "enum": ["MANUAL_TRIGGER", "WEBHOOK_TRIGGER", "SCHEDULE_TRIGGER", "HTTP_REQUEST", "TRANSFORM", "LOG",
+                   "NOTIFICATION", "CONDITION", "DELAY"]
+        },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "position": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y"],
+          "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+        },
+        "config": { "type": "object" },
+        "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 300 },
+        "retryPolicy": { "$ref": "#/$defs/retryPolicy" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "MANUAL_TRIGGER" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/manualTriggerConfig" } } } },
+        { "if": { "properties": { "type": { "const": "WEBHOOK_TRIGGER" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/webhookTriggerConfig" } } } },
+        { "if": { "properties": { "type": { "const": "SCHEDULE_TRIGGER" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/scheduleTriggerConfig" } } } },
+        { "if": { "properties": { "type": { "const": "HTTP_REQUEST" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/httpRequestConfig" } } } },
+        { "if": { "properties": { "type": { "const": "TRANSFORM" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/transformConfig" } } } },
+        { "if": { "properties": { "type": { "const": "LOG" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/logConfig" } } } },
+        { "if": { "properties": { "type": { "const": "NOTIFICATION" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/notificationConfig" } } } },
+        { "if": { "properties": { "type": { "const": "CONDITION" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/conditionConfig" } } } },
+        { "if": { "properties": { "type": { "const": "DELAY" } } },
+          "then": { "properties": { "config": { "$ref": "#/$defs/delayConfig" } } } }
+      ]
+    },
+    "manualTriggerConfig": { "type": "object", "additionalProperties": false, "properties": {} },
+    "webhookTriggerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requireSignature": { "type": "boolean" },
+        "requiredFields": { "type": "array", "maxItems": 50, "items": { "type": "string", "minLength": 1, "maxLength": 200 } }
+      }
+    },
+    "scheduleTriggerConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cron", "timezone"],
+      "properties": {
+        "cron": { "type": "string", "minLength": 9, "maxLength": 120 },
+        "timezone": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "payload": { "type": "object" }
+      }
+    },
+    "httpRequestConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["method", "url"],
+      "properties": {
+        "method": { "enum": ["GET", "POST", "PUT", "PATCH", "DELETE"] },
+        "url": { "type": "string", "minLength": 1, "maxLength": 2048 },
+        "headers": {
+          "type": "object",
+          "maxProperties": 50,
+          "additionalProperties": { "type": "string", "maxLength": 4096 }
+        },
+        "query": {
+          "type": "object",
+          "maxProperties": 50,
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        },
+        "body": {},
+        "failOnHttpError": { "type": "boolean" }
+      }
+    },
+    "transformConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "source": {},
+        "pick": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1 } },
+        "rename": { "type": "object", "additionalProperties": { "type": "string", "minLength": 1 } },
+        "set": { "type": "object" }
+      }
+    },
+    "logConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["message"],
+      "properties": {
+        "message": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "level": { "enum": ["INFO", "WARN", "ERROR"] }
+      }
+    },
+    "notificationConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["channel", "recipient", "message"],
+      "properties": {
+        "channel": { "enum": ["EMAIL", "LOG"] },
+        "recipient": { "type": "string", "minLength": 1, "maxLength": 320 },
+        "subject": { "type": "string", "maxLength": 200 },
+        "message": { "type": "string", "minLength": 1, "maxLength": 10000 }
+      }
+    },
+    "conditionConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["conditions"],
+      "properties": {
+        "combinator": { "enum": ["AND", "OR"] },
+        "conditions": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["left", "operator"],
+            "properties": {
+              "left": {},
+              "operator": { "enum": ["EQUALS", "NOT_EQUALS", "GREATER_THAN", "LESS_THAN", "CONTAINS", "EXISTS"] },
+              "right": {}
+            }
+          }
+        }
+      }
+    },
+    "delayConfig": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["durationSeconds"],
+      "properties": {
+        "durationSeconds": { "type": "integer", "minimum": 1, "maximum": 604800 }
+      }
+    }
+  }
+}

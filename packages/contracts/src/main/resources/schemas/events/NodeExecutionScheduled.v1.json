@@ -1,0 +1,7 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "NodeExecutionScheduled", "type": "object",
+  "required": ["executionId","workflowId","nodeId","nodeType","attemptId","attemptNumber","timeoutMs","config"],
+  "properties": {
+    "executionId": {"type":"string","format":"uuid"}, "workflowId": {"type":"string","format":"uuid"},
+    "nodeId": {"type":"string"}, "nodeType": {"type":"string"}, "attemptId": {"type":"string","format":"uuid"},
+    "attemptNumber": {"type":"integer","minimum":1}, "timeoutMs": {"type":"integer","minimum":1},
+    "config": {"type":"object"} } }

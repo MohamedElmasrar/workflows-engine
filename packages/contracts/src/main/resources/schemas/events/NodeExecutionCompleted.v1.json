@@ -1,0 +1,7 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "NodeExecutionCompleted", "type": "object",
+  "required": ["executionId","nodeId","attemptId","workerId","output","durationMs","completedAt"],
+  "properties": {
+    "executionId": {"type":"string","format":"uuid"}, "nodeId": {"type":"string"},
+    "attemptId": {"type":"string","format":"uuid"}, "workerId": {"type":"string"}, "output": {},
+    "branch": {"type":["string","null"]}, "durationMs": {"type":"integer","minimum":0},
+    "completedAt": {"type":"string","format":"date-time"} } }

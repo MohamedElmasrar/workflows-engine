@@ -1,0 +1,8 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "WorkflowExecutionLifecycleEvent", "type": "object",
+  "required": ["executionId","workflowId","workflowVersion","status","occurredAt"],
+  "properties": {
+    "executionId": {"type":"string","format":"uuid"}, "workflowId": {"type":"string","format":"uuid"},
+    "workflowVersion": {"type":"integer","minimum":1},
+    "status": {"enum":["RUNNING","COMPLETED","FAILED","CANCELLED","TIMED_OUT"]},
+    "occurredAt": {"type":"string","format":"date-time"},
+    "error": {"type":["object","null"],"properties":{"code":{"type":"string"},"message":{"type":"string"}}} } }

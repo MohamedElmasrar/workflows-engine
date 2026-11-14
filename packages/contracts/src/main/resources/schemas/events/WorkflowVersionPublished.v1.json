@@ -1,0 +1,7 @@
+{ "$schema": "https://json-schema.org/draft/2020-12/schema", "title": "WorkflowVersionPublished", "type": "object",
+  "required": ["workflowId","version","name","ownerId","publishedBy","publishedAt","definition"],
+  "properties": {
+    "workflowId": {"type":"string","format":"uuid"}, "version": {"type":"integer","minimum":1},
+    "name": {"type":"string"}, "ownerId": {"type":"string"}, "publishedBy": {"type":"string"},
+    "publishedAt": {"type":"string","format":"date-time"},
+    "definition": {"type":"object","required":["schemaVersion","nodes","edges"],"description":"Validated against workflow-definition.v1.json"} } }

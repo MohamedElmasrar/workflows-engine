@@ -1,0 +1,9 @@
+.DS_Store
+.git/
+*.swp
+*.bak
+*.tmp
+.idea/
+.vscode/
+# documentation only, never rendered or packaged
+secrets.example.yaml

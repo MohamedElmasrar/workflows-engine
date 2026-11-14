@@ -1,0 +1,23 @@
+{{- range $name, $c := .Values.components }}
+{{- $pdb := $c.pdb | default dict }}
+{{- if and $c.enabled $pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "wp.componentName" (dict "root" $ "name" $name) }}
+  labels:
+    {{- include "wp.componentLabels" (dict "root" $ "name" $name) | nindent 4 }}
+spec:
+  {{- if hasKey $pdb "maxUnavailable" }}
+  maxUnavailable: {{ $pdb.maxUnavailable }}
+  {{- else }}
+  minAvailable: {{ $pdb.minAvailable | default 1 }}
+  {{- end }}
+  # Lets node drains evict pods that are not ready yet instead of blocking on them.
+  unhealthyPodEvictionPolicy: AlwaysAllow
+  selector:
+    matchLabels:
+      {{- include "wp.selectorLabels" (dict "root" $ "name" $name) | nindent 6 }}
+{{- end }}
+{{- end }}

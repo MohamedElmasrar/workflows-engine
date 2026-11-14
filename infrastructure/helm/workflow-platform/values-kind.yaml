@@ -1,0 +1,78 @@
+# Local kind cluster (development only). Usage, from the repository root:
+#   helm upgrade --install workflow-platform infrastructure/helm/workflow-platform -n workflow-platform \
+#     -f infrastructure/helm/workflow-platform/values-kind.yaml
+# Requires the dev dependencies from infrastructure/kubernetes/dev-dependencies in the same namespace and the
+# images loaded into the cluster with `kind load docker-image` (see docs/runbooks/kubernetes.md).
+# Access through port-forwards (no Ingress controller needed): gateway 8080, web 3000, Keycloak 8180.
+
+image:
+  # docker compose build tags images as workflow-platform/<name>:dev
+  registry: workflow-platform
+  tag: dev
+  # Images are side-loaded with kind load; never pull.
+  pullPolicy: Never
+
+config:
+  KAFKA_BOOTSTRAP: kafka:9092
+  PLATFORM_MESSAGING_PARTITIONS: "6"
+  PLATFORM_MESSAGING_REPLICATION_FACTOR: "1"
+  # Keycloak runs with KC_HOSTNAME=http://localhost:8180 and is port-forwarded to localhost:8180, so tokens obtained
+  # by the browser / smoke test carry this issuer; the services fetch keys over the cluster network.
+  OIDC_ISSUER: http://localhost:8180/realms/workflow-platform
+  OIDC_JWKS_URI: http://keycloak:8080/realms/workflow-platform/protocol/openid-connect/certs
+  OTLP_TRACES_ENDPOINT: http://otel-collector:4318/v1/traces
+  TRACING_SAMPLING: "1.0"
+  REDIS_HOST: redis
+  SMTP_HOST: mailpit
+  SMTP_PORT: "1025"
+  CORS_ALLOWED_ORIGINS: http://localhost:3000
+  PUBLIC_BASE_URL: http://localhost:8080
+  # The WireMock mock API is a private in-cluster Service the demo workflow calls; trusted explicitly (as in compose).
+  WORKER_HTTP_ALLOWED_HOSTS: mock-api
+
+defaults:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits: { cpu: "1", memory: 768Mi }
+  # A single node: nothing to spread.
+  podAntiAffinity: null
+
+components:
+  api-gateway:
+    pdb: { enabled: false }
+  workflow-service:
+    env:
+      DB_URL: jdbc:postgresql://postgres:5432/workflow
+      DB_USER: workflow
+  execution-engine:
+    env:
+      DB_URL: jdbc:postgresql://postgres:5432/execution
+      DB_USER: execution
+      ENGINE_LEASE_GRACE: 60s
+      SPRING_KAFKA_LISTENER_CONCURRENCY: "3"
+    resources:
+      requests: { cpu: 100m, memory: 512Mi }
+      limits: { cpu: "1", memory: 768Mi }
+    hpa: { enabled: false }
+    pdb: { enabled: false }
+  worker-service:
+    env:
+      WORKER_CONCURRENCY: "3"
+      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 30s
+    terminationGracePeriodSeconds: 45
+    hpa: { enabled: false }
+    pdb: { enabled: false }
+  trigger-service:
+    env:
+      DB_URL: jdbc:postgresql://postgres:5432/trigger
+      DB_USER: trigger_svc
+  web:
+    # Set to false until apps/web has a Dockerfile and workflow-platform/web:dev is built and loaded.
+    enabled: true
+    resources:
+      requests: { cpu: 50m, memory: 128Mi }
+      limits: { cpu: "1", memory: 512Mi }
+
+ingress:
+  enabled: false

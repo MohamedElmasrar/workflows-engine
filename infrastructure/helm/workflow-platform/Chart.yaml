@@ -1,0 +1,12 @@
+apiVersion: v2
+name: workflow-platform
+description: Distributed workflow automation platform (api-gateway, workflow-service, execution-engine, worker-service, trigger-service, web)
+type: application
+version: 0.1.0
+# Default image tag when components[*].image.tag and image.tag are empty (release.yml pushes semver tags without the "v").
+appVersion: "0.1.0"
+# preStop uses the native `sleep` lifecycle action (beta 1.30, GA 1.34), so no shell is needed in the images.
+kubeVersion: ">=1.30.0-0"
+keywords: [workflow, spring-boot, kafka]
+maintainers:
+  - name: workflow-platform team

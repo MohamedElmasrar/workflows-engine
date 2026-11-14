@@ -36,8 +36,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     key-resolver: "#{@principalOrIpKeyResolver}"
-                    redis-rate-limiter.replenishRate: 5
-                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.replenishRate: ${EXECUTION_START_RATE:5}
+                    redis-rate-limiter.burstCapacity: ${EXECUTION_START_BURST:20}
             - id: workflow-triggers
               uri: ${TRIGGER_SERVICE_URL:http://localhost:8084}
               order: 0
@@ -102,6 +102,10 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        spring.kafka.listener: true
 
 logging:
   structured:

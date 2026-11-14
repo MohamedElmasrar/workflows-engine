@@ -1,0 +1,44 @@
+# DEVELOPMENT ONLY: single-replica dependencies for a local kind cluster, mirroring compose.yaml.
+# No high availability, no backups, no persistence guarantees (data lives on kind's node-local volumes and is gone
+# with the cluster), default credentials. Never use for production (see docs/runbooks/kubernetes.md).
+#
+# The ConfigMaps are generated from the files compose uses (single source of truth), which live outside this
+# directory, so kustomize must be allowed to read them:
+#   kubectl kustomize --load-restrictor LoadRestrictionsNone infrastructure/kubernetes/dev-dependencies \
+#     | kubectl apply --server-side -f -
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: workflow-platform
+
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: workflow-platform-dev-dependencies
+      environment: development-only
+    includeSelectors: false
+    includeTemplates: true
+
+resources:
+  - namespace.yaml
+  - postgres.yaml
+  - kafka.yaml
+  - redis.yaml
+  - keycloak.yaml
+  - mailpit.yaml
+  - mock-api.yaml
+  - otel-collector.yaml
+
+configMapGenerator:
+  - name: postgres-init
+    files:
+      - init.sql=../../docker/postgres/init.sql
+  - name: keycloak-realm
+    files:
+      - workflow-platform-realm.json=../../keycloak/workflow-platform-realm.json
+  # configMapGenerator takes files, not directories: add new WireMock mapping files here.
+  - name: mock-api-mappings
+    files:
+      - fraud-score.json=../../docker/mock-api/mappings/fraud-score.json
+  - name: otel-collector-config
+    files:
+      - collector.yaml=otel-collector-config.yaml

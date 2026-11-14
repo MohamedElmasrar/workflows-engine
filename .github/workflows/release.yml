@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+# Never cancel a release that may be half-way through publishing or deploying; queue the next one instead.
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  test:
+    name: Tests
+    # Same jobs as pull requests (backend, integration, frontend, security, helm). Images are built below.
+    uses: ./.github/workflows/ci.yml
+    with:
+      skip-images: true
+    permissions:
+      contents: read
+      security-events: write
+      actions: read
+
+  publish:
+    name: Publish ${{ matrix.name }}
+    needs: test   # nothing is published unless every test job succeeded
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write   # push to GHCR (this job only)
+    strategy:
+      fail-fast: true
+      matrix:
+        include:
+          - { name: api-gateway, context: ., file: infrastructure/docker/service.Dockerfile, module: services/api-gateway, port: "8080" }
+          - { name: workflow-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/workflow-service, port: "8081" }
+          - { name: execution-engine, context: ., file: infrastructure/docker/service.Dockerfile, module: services/execution-engine, port: "8082" }
+          - { name: worker-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/worker-service, port: "8083" }
+          - { name: trigger-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/trigger-service, port: "8084" }
+          - { name: web, context: apps/web, file: apps/web/Dockerfile, module: "", port: "3000" }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Image name
+        # Registry paths must be lower case; github.repository keeps the owner's capitalisation.
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY,,}/${{ matrix.name }}" >> "$GITHUB_ENV"
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.IMAGE }}
+          tags: |
+            type=sha,format=long
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+      - name: Build and push (with SBOM and provenance attestations)
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          build-args: |
+            MODULE=${{ matrix.module }}
+            PORT=${{ matrix.port }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          provenance: mode=max
+          sbom: true
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  deploy:
+    name: Deploy to staging
+    needs: publish
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging   # protection rules / reviewers and the KUBECONFIG secret are configured on the environment
+    permissions:
+      contents: read
+    env:
+      # The `secrets` context cannot be used in a job-level `if`, so the secret is exposed as an env var and checked
+      # in the first step. Without a KUBECONFIG secret (forks, a repository without a cluster yet) every following
+      # step is skipped and the job succeeds with a notice instead of failing the release.
+      KUBECONFIG_DATA: ${{ secrets.KUBECONFIG }}
+      # Optional: environment-specific values (hosts, OIDC issuer, DB URLs) as YAML. Kept out of Git.
+      STAGING_VALUES: ${{ secrets.HELM_VALUES_STAGING }}
+    steps:
+      - name: Check for cluster credentials
+        id: guard
+        run: |
+          if [ -z "$KUBECONFIG_DATA" ]; then
+            echo "::notice title=Deploy skipped::The staging environment has no KUBECONFIG secret."
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: actions/checkout@v7
+        if: steps.guard.outputs.configured == 'true'
+        with:
+          persist-credentials: false
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+        if: steps.guard.outputs.configured == 'true'
+        with:
+          version: v4.3.2
+      - name: helm upgrade --install
+        if: steps.guard.outputs.configured == 'true'
+        run: |
+          umask 077
+          export KUBECONFIG="$RUNNER_TEMP/kubeconfig"
+          printf '%s' "$KUBECONFIG_DATA" > "$KUBECONFIG"
+          extra=()
+          if [ -n "$STAGING_VALUES" ]; then
+            printf '%s' "$STAGING_VALUES" > "$RUNNER_TEMP/values-staging.yaml"
+            extra+=(-f "$RUNNER_TEMP/values-staging.yaml")
+          fi
+          helm upgrade --install workflow-platform infrastructure/helm/workflow-platform \
+            --namespace workflow-platform --create-namespace \
+            "${extra[@]}" \
+            --set image.registry="ghcr.io/${GITHUB_REPOSITORY,,}" \
+            --set image.tag="sha-${GITHUB_SHA}" \
+            --rollback-on-failure --wait --timeout 10m --history-max 10
+          helm -n workflow-platform status workflow-platform
+      - name: Remove credentials
+        if: always() && steps.guard.outputs.configured == 'true'
+        run: rm -f "$RUNNER_TEMP/kubeconfig" "$RUNNER_TEMP/values-staging.yaml"

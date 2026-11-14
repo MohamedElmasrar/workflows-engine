@@ -1,0 +1,31 @@
+version: 2
+updates:
+  - package-ecosystem: maven
+    directory: /
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 10
+    groups:
+      spring:
+        patterns: ["org.springframework*", "io.micrometer*"]
+      test:
+        patterns: ["org.testcontainers*", "com.tngtech.archunit*", "org.junit*"]
+
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule: { interval: weekly }
+    open-pull-requests-limit: 10
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      actions:
+        patterns: ["*"]
+
+  # Base images of infrastructure/docker/service.Dockerfile (eclipse-temurin) and apps/web/Dockerfile.
+  - package-ecosystem: docker
+    directories: ["/infrastructure/docker", "/apps/web"]
+    schedule: { interval: weekly }

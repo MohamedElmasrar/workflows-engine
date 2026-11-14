@@ -180,10 +180,27 @@ services:
       EXECUTION_ENGINE_URL: http://execution-engine:8082
       TRIGGER_SERVICE_URL: http://trigger-service:8084
       CORS_ALLOWED_ORIGINS: http://localhost:3000
+      # manual execution starts per user and second (raise for load tests only)
+      EXECUTION_START_RATE: ${EXECUTION_START_RATE:-5}
+      EXECUTION_START_BURST: ${EXECUTION_START_BURST:-20}
     depends_on:
       keycloak: { condition: service_healthy }
       redis: { condition: service_healthy }
     ports: ["8080:8080"]
+
+  web:
+    build:
+      context: apps/web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: http://localhost:8080
+        NEXT_PUBLIC_KEYCLOAK_URL: http://localhost:8180
+        NEXT_PUBLIC_KEYCLOAK_REALM: workflow-platform
+        NEXT_PUBLIC_KEYCLOAK_CLIENT_ID: workflow-web
+    image: workflow-platform/web:dev
+    restart: unless-stopped
+    depends_on:
+      api-gateway: { condition: service_healthy }
+    ports: ["3000:3000"]
 
   # ------------------------------------------------------------------ optional observability (profile)
   jaeger:

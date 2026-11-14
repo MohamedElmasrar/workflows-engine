@@ -1,0 +1,40 @@
+{{- /* HPAs only for components that opt in (execution-engine, worker-service): see the comments in values.yaml. */ -}}
+{{- range $name, $c := .Values.components }}
+{{- $hpa := $c.hpa | default dict }}
+{{- if and $c.enabled $hpa.enabled }}
+{{- if gt (int $hpa.minReplicas) (int $hpa.maxReplicas) }}
+{{- fail (printf "components.%s.hpa.minReplicas must be <= maxReplicas" $name) }}
+{{- end }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "wp.componentName" (dict "root" $ "name" $name) }}
+  labels:
+    {{- include "wp.componentLabels" (dict "root" $ "name" $name) | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "wp.componentName" (dict "root" $ "name" $name) }}
+  minReplicas: {{ $hpa.minReplicas }}
+  maxReplicas: {{ $hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $hpa.targetCPUUtilizationPercentage }}
+  behavior:
+    # Every scale event rebalances the Kafka consumer group (processing pauses briefly), so scale down slowly.
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - { type: Pods, value: 1, periodSeconds: 120 }
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - { type: Pods, value: 1, periodSeconds: 60 }
+{{- end }}
+{{- end }}

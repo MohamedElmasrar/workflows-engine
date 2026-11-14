@@ -1,0 +1,242 @@
+name: CI
+
+on:
+  pull_request:
+  # main and tags are tested by release.yml, which calls this workflow before publishing (no duplicate runs).
+  push:
+    branches-ignore: [main]
+    tags-ignore: ["**"]
+  workflow_call:
+    inputs:
+      skip-images:
+        description: Skip the build-only image job (release.yml builds and pushes the images itself)
+        type: boolean
+        default: false
+
+# Least privilege: jobs that need more ask for it individually.
+permissions:
+  contents: read
+
+# When called from release.yml, github.workflow is "Release", so this group never collides with the caller's.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: "21"
+  NODE_VERSION: "24"
+  HELM_VERSION: v4.3.2
+  KUBECONFORM_VERSION: v0.8.0
+
+jobs:
+  backend:
+    name: Backend (format, compile, unit + ArchUnit tests)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Check formatting (Spotless, Palantir Java Format)
+        run: ./mvnw -B -ntp spotless:check
+      - name: Compile, unit and architecture tests
+        # maven-failsafe-plugin honours -DskipITs: the *IT classes are compiled but not run here.
+        run: ./mvnw -B -ntp verify -DskipITs
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: surefire-reports
+          path: "**/target/surefire-reports/"
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Upload coverage (JaCoCo)
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jacoco-report
+          path: "**/target/site/jacoco/"
+          if-no-files-found: ignore
+          retention-days: 14
+
+  backend-integration:
+    name: Backend integration tests (Testcontainers)
+    needs: backend
+    runs-on: ubuntu-latest   # has a Docker daemon for Testcontainers
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+      - name: Unit and integration tests
+        run: ./mvnw -B -ntp verify
+      - name: Upload integration test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: failsafe-reports
+          path: |
+            **/target/failsafe-reports/
+            **/target/surefire-reports/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  frontend:
+    name: Frontend (lint, typecheck, test, build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: apps/web
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+
+  security:
+    name: Security (Trivy, npm audit, dependency review)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write   # SARIF upload to code scanning (this job only)
+      actions: read            # required by upload-sarif in private repositories
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Trivy filesystem scan (dependencies, IaC misconfiguration, secrets) -> SARIF
+        # Third-party action pinned to a commit SHA (v0.36.0); Dependabot keeps it current.
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln,misconfig,secret
+          skip-dirs: "**/target,**/node_modules,apps/web/.next"
+          format: sarif
+          output: trivy-results.sarif
+          exit-code: "0"   # report everything to code scanning; the gate is the next step
+      - name: Upload Trivy SARIF
+        # Pull requests from forks get a read-only token and cannot write security events.
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-fs
+      - name: Fail on fixable HIGH/CRITICAL vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          scanners: vuln
+          skip-dirs: "**/target,**/node_modules,apps/web/.next"
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          format: table
+          exit-code: "1"
+          skip-setup-trivy: true
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: npm audit
+        working-directory: apps/web
+        run: npm audit --audit-level=high
+      - name: Dependency review
+        if: github.event_name == 'pull_request'
+        uses: actions/dependency-review-action@v5
+        with:
+          fail-on-severity: high
+
+  helm:
+    name: Helm chart and manifests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e # v5.1.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - name: Install kubeconform
+        run: |
+          mkdir -p "$RUNNER_TEMP/bin"
+          curl -fsSL "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz" \
+            | tar xz -C "$RUNNER_TEMP/bin" kubeconform
+          echo "$RUNNER_TEMP/bin" >> "$GITHUB_PATH"
+      - name: helm lint
+        run: |
+          helm lint infrastructure/helm/workflow-platform
+          helm lint infrastructure/helm/workflow-platform -f infrastructure/helm/workflow-platform/values-kind.yaml
+      - name: helm template | kubeconform
+        run: |
+          set -o pipefail
+          chart=infrastructure/helm/workflow-platform
+          for args in "" "-f $chart/values-kind.yaml" "--set ingress.enabled=true"; do
+            echo "::group::helm template $args"
+            # shellcheck disable=SC2086 # word splitting of $args is intended
+            helm template workflow-platform "$chart" -n workflow-platform $args \
+              | kubeconform -strict -summary -ignore-missing-schemas
+            echo "::endgroup::"
+          done
+      - name: Dev dependencies (kustomize) | kubeconform
+        run: |
+          set -o pipefail
+          kubectl kustomize --load-restrictor LoadRestrictionsNone infrastructure/kubernetes/dev-dependencies \
+            | kubeconform -strict -summary -ignore-missing-schemas
+
+  docker:
+    name: Image ${{ matrix.name }} (build only)
+    if: ${{ !inputs.skip-images }}
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: api-gateway, context: ., file: infrastructure/docker/service.Dockerfile, module: services/api-gateway, port: "8080" }
+          - { name: workflow-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/workflow-service, port: "8081" }
+          - { name: execution-engine, context: ., file: infrastructure/docker/service.Dockerfile, module: services/execution-engine, port: "8082" }
+          - { name: worker-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/worker-service, port: "8083" }
+          - { name: trigger-service, context: ., file: infrastructure/docker/service.Dockerfile, module: services/trigger-service, port: "8084" }
+          - { name: web, context: apps/web, file: apps/web/Dockerfile, module: "", port: "3000" }
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - name: Build
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          build-args: |
+            MODULE=${{ matrix.module }}
+            PORT=${{ matrix.port }}
+          push: false
+          tags: workflow-platform/${{ matrix.name }}:ci
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}

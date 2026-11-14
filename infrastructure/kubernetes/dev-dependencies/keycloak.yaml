@@ -1,0 +1,80 @@
+# DEVELOPMENT ONLY. Keycloak 26.4 in start-dev mode, realm imported from infrastructure/keycloak (demo users with
+# demo passwords), admin/admin bootstrap account, database "keycloak" on the dev PostgreSQL.
+#
+# Issuer: access tokens must carry the issuer the services validate (OIDC_ISSUER). KC_HOSTNAME pins the frontend
+# URL to http://localhost:8180, which is where you reach Keycloak through
+#   kubectl -n workflow-platform port-forward svc/keycloak 8180:8080
+# so the browser, the smoke test and the services all agree on iss=http://localhost:8180/realms/workflow-platform.
+# KC_HOSTNAME_BACKCHANNEL_DYNAMIC lets the services fetch the JWKS in-cluster at http://keycloak:8080/... .
+apiVersion: v1
+kind: Service
+metadata:
+  name: keycloak
+spec:
+  selector: { app: keycloak }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: keycloak
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: keycloak }
+  template:
+    metadata:
+      labels: { app: keycloak }
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      initContainers:
+        - name: wait-for-postgres
+          image: postgres:17-alpine
+          command: [sh, -c, "until pg_isready -h postgres -p 5432; do echo waiting for postgres; sleep 2; done"]
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 70
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+      containers:
+        - name: keycloak
+          image: quay.io/keycloak/keycloak:26.4
+          args: [start-dev, --import-realm]
+          env:
+            - { name: KC_BOOTSTRAP_ADMIN_USERNAME, value: admin }
+            - { name: KC_BOOTSTRAP_ADMIN_PASSWORD, value: admin }
+            - { name: KC_DB, value: postgres }
+            - { name: KC_DB_URL, value: "jdbc:postgresql://postgres:5432/keycloak" }
+            - { name: KC_DB_USERNAME, value: keycloak }
+            - { name: KC_DB_PASSWORD, value: keycloak }
+            - { name: KC_HOSTNAME, value: "http://localhost:8180" }
+            - { name: KC_HOSTNAME_BACKCHANNEL_DYNAMIC, value: "true" }
+            - { name: KC_HEALTH_ENABLED, value: "true" }
+          ports:
+            - { name: http, containerPort: 8080 }
+            - { name: management, containerPort: 9000 }
+          startupProbe:
+            httpGet: { path: /health/started, port: management }
+            periodSeconds: 5
+            failureThreshold: 60
+          readinessProbe:
+            httpGet: { path: /health/ready, port: management }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health/live, port: management }
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 200m, memory: 512Mi }
+            limits: { memory: 1Gi }
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: realm, mountPath: /opt/keycloak/data/import, readOnly: true }
+      volumes:
+        - name: realm
+          configMap: { name: keycloak-realm }

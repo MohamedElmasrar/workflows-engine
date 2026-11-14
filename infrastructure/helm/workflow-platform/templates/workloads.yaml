@@ -1,0 +1,7 @@
+{{- /* One Deployment + Service per enabled component, rendered by the shared "wp.workload" template. */ -}}
+{{- range $name, $c := .Values.components }}
+{{- if $c.enabled }}
+---
+{{ include "wp.workload" (dict "root" $ "name" $name "c" $c) }}
+{{- end }}
+{{- end }}

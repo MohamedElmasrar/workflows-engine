@@ -1,0 +1,45 @@
+# DEVELOPMENT ONLY. WireMock "mock-api" (fraud score endpoint used by scripts/order-webhook-demo.json at
+# http://mock-api:8080/fraud-score). Mappings come from infrastructure/docker/mock-api/mappings.
+apiVersion: v1
+kind: Service
+metadata:
+  name: mock-api
+spec:
+  selector: { app: mock-api }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mock-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mock-api }
+  template:
+    metadata:
+      labels: { app: mock-api }
+    spec:
+      enableServiceLinks: false
+      automountServiceAccountToken: false
+      containers:
+        - name: mock-api
+          image: wiremock/wiremock:3.13.1
+          args: [--global-response-templating, --disable-banner]
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /__admin/health, port: http }
+            periodSeconds: 10
+          resources:
+            requests: { cpu: 50m, memory: 192Mi }
+            limits: { memory: 384Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: mappings, mountPath: /home/wiremock/mappings, readOnly: true }
+      volumes:
+        - name: mappings
+          configMap: { name: mock-api-mappings }

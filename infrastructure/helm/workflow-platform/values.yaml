@@ -1,0 +1,260 @@
+# Production-like defaults. Local kind overrides live in values-kind.yaml.
+# Secrets are never set here: components reference pre-created Secrets by name (see secrets.example.yaml).
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  # Final reference: <registry>/<component image.repository>:<tag>
+  # release.yml publishes ghcr.io/<owner>/<repo>/<component>; override per environment.
+  registry: ghcr.io/example-org/workflow-engine
+  # Empty = Chart.appVersion. CI deploys pass --set image.tag=sha-<commit>.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+# ---------------------------------------------------------------------------------------------------------------
+# Non-secret configuration shared by all Spring Boot services (rendered into ConfigMap <release>-config, loaded
+# with envFrom). Keys are environment variable names read by services/*/src/main/resources/application.yml.
+# WORKFLOW_SERVICE_URL, EXECUTION_ENGINE_URL and TRIGGER_SERVICE_URL are derived from the in-chart Services unless
+# set here. Unused keys are ignored by services that do not read them.
+# ---------------------------------------------------------------------------------------------------------------
+config:
+  KAFKA_BOOTSTRAP: kafka-bootstrap.kafka.svc:9092
+  # Topics are created by the services on startup (auto topic creation is disabled on the broker). Partitions cap
+  # the number of useful consumers per group; see the HPA comments below before changing either value.
+  PLATFORM_MESSAGING_PARTITIONS: "6"
+  PLATFORM_MESSAGING_REPLICATION_FACTOR: "3"
+  # Must equal the `iss` claim in access tokens (the public Keycloak URL users log in through).
+  OIDC_ISSUER: https://auth.example.com/realms/workflow-platform
+  # Fetched by the services server-side; may be an in-cluster URL.
+  OIDC_JWKS_URI: https://auth.example.com/realms/workflow-platform/protocol/openid-connect/certs
+  OTLP_TRACES_ENDPOINT: http://otel-collector.observability.svc:4318/v1/traces
+  TRACING_SAMPLING: "0.1"
+  LOG_FORMAT: ecs
+  REDIS_HOST: redis.workflow-platform.svc
+  # Set explicitly: also protects against Docker-link style env injection (enableServiceLinks is off as well).
+  REDIS_PORT: "6379"
+  SMTP_HOST: smtp.example.com
+  SMTP_PORT: "587"
+  MAIL_FROM: workflows@example.com
+  CORS_ALLOWED_ORIGINS: https://workflows.example.com
+  # Base URL used to build webhook URLs shown to users (the Ingress host; /api is routed to the gateway).
+  PUBLIC_BASE_URL: https://workflows.example.com
+  # Administrator-trusted hosts the HTTP Request node may reach even if they resolve to private addresses
+  # (comma separated). Keep empty unless needed; never derived from workflow input.
+  WORKER_HTTP_ALLOWED_HOSTS: ""
+  # Publish histogram buckets for HTTP server requests and Kafka listeners so the Grafana dashboards can compute
+  # p95 latency (Spring Boot only exports _count/_sum/_max by default). Binds to
+  # management.metrics.distribution.percentiles-histogram.{http.server.requests,spring.kafka.listener}.
+  MANAGEMENT_METRICS_DISTRIBUTION_PERCENTILESHISTOGRAM_HTTP_SERVER_REQUESTS: "true"
+  MANAGEMENT_METRICS_DISTRIBUTION_PERCENTILESHISTOGRAM_SPRING_KAFKA_LISTENER: "true"
+
+# ---------------------------------------------------------------------------------------------------------------
+# Defaults applied to every component unless the component sets the same key (whole-key replacement, no deep merge).
+# ---------------------------------------------------------------------------------------------------------------
+defaults:
+  replicas: 2
+  # Spring waits up to SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE (30s default) for in-flight requests;
+  # grace = preStop sleep + shutdown phase + margin.
+  terminationGracePeriodSeconds: 60
+  # Keeps the pod serving while endpoints/Ingress controllers stop routing to it.
+  preStopSleepSeconds: 10
+  # Heap sized from the container memory limit; the JVM exits (and is restarted) instead of limping on OOM.
+  javaToolOptions: "-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
+  resources:
+    requests: { cpu: 250m, memory: 768Mi }
+    # Memory limit = request (no overcommit for the JVM). CPU limit is generous because JVM startup is CPU heavy.
+    limits: { cpu: "2", memory: 768Mi }
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    runAsGroup: 10001
+    fsGroup: 10001
+    seccompProfile: { type: RuntimeDefault }
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 10001
+    capabilities: { drop: [ALL] }
+  # Writable scratch space (Tomcat work dir, JNA/Netty native libs) because the root filesystem is read-only.
+  tmpSizeLimit: 256Mi
+  podAnnotations:
+    prometheus.io/scrape: "true"
+  # Probes for Spring Boot components (actuator probe groups, management.endpoint.health.probes.enabled=true).
+  springProbes:
+    startupProbe:
+      httpGet: { path: /actuator/health/liveness, port: http }
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 36   # up to 3 minutes for Flyway migrations and Kafka admin on a cold start
+    readinessProbe:
+      httpGet: { path: /actuator/health/readiness, port: http }
+      periodSeconds: 10
+      timeoutSeconds: 3
+      failureThreshold: 3
+    livenessProbe:
+      httpGet: { path: /actuator/health/liveness, port: http }
+      periodSeconds: 20
+      timeoutSeconds: 3
+      failureThreshold: 3
+  # Soft spreading of replicas across nodes.
+  podAntiAffinity:
+    weight: 100
+    topologyKey: kubernetes.io/hostname
+  nodeSelector: {}
+  tolerations: []
+
+# ---------------------------------------------------------------------------------------------------------------
+# Components. Keys:
+#   enabled, springBoot (actuator probes, JAVA_TOOL_OPTIONS, shared ConfigMap), image.repository/tag/pullPolicy,
+#   port, replicas, resources, env (plain, non-secret; values are templated), secretEnv (references only),
+#   probes (replace springProbes), service.type, hpa, pdb, extraVolumes/extraVolumeMounts, any key of `defaults`.
+# ---------------------------------------------------------------------------------------------------------------
+components:
+  api-gateway:
+    enabled: true
+    springBoot: true
+    image: { repository: api-gateway }
+    port: 8080
+    env: {}
+    secretEnv: []
+    pdb: { enabled: true, minAvailable: 1 }
+
+  workflow-service:
+    enabled: true
+    springBoot: true
+    image: { repository: workflow-service }
+    port: 8081
+    env:
+      DB_URL: jdbc:postgresql://postgres.example.internal:5432/workflow?sslmode=require
+      DB_USER: workflow
+    secretEnv:
+      - { name: DB_PASSWORD, existingSecret: workflow-platform-db, key: workflow-password }
+
+  execution-engine:
+    enabled: true
+    springBoot: true
+    image: { repository: execution-engine }
+    port: 8082
+    env:
+      DB_URL: jdbc:postgresql://postgres.example.internal:5432/execution?sslmode=require
+      DB_USER: execution
+      ENGINE_LEASE_GRACE: 60s
+      # 3 replicas x 2 consumers = 6 = PLATFORM_MESSAGING_PARTITIONS (per consumed topic).
+      SPRING_KAFKA_LISTENER_CONCURRENCY: "2"
+    secretEnv:
+      - { name: DB_PASSWORD, existingSecret: workflow-platform-db, key: execution-password }
+    resources:
+      requests: { cpu: 500m, memory: 1Gi }
+      limits: { cpu: "2", memory: 1Gi }
+    # The engine is stateless between messages (state lives in Postgres; scheduling, leases and the outbox are safe
+    # across replicas via row locks / advisory locks), so it can scale horizontally on CPU. Each replica runs
+    # SPRING_KAFKA_LISTENER_CONCURRENCY consumers per topic and a topic has 6 partitions: consumers beyond
+    # 6 per group sit idle, so maxReplicas x concurrency must stay <= partitions (3 x 2 = 6). To go further,
+    # add partitions first (kafka-topics.sh --alter; they can never be reduced).
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+    pdb: { enabled: true, minAvailable: 1 }
+
+  worker-service:
+    enabled: true
+    springBoot: true
+    image: { repository: worker-service }
+    port: 8083
+    env:
+      # 3 replicas x 2 consumers = 6 = partitions of execution.node-tasks.v1.
+      WORKER_CONCURRENCY: "2"
+      # A task may run up to the 300 s node timeout; give in-flight tasks time to finish. Tasks cut off anyway are
+      # re-dispatched by the engine after the lease expires and de-duplicated through the Redis attempt cache.
+      SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: 60s
+    terminationGracePeriodSeconds: 90
+    secretEnv: []
+    # Stateless (only a short-lived Redis attempt cache), CPU bound for Transform/Condition and JSON work, so CPU is a
+    # reasonable scaling signal. Same partition cap as the engine: maxReplicas x WORKER_CONCURRENCY <= 6.
+    # Scaling on consumer lag (KEDA / external metrics) would be a better signal once available.
+    hpa:
+      enabled: true
+      minReplicas: 2
+      maxReplicas: 3
+      targetCPUUtilizationPercentage: 70
+    pdb: { enabled: true, minAvailable: 1 }
+
+  trigger-service:
+    enabled: true
+    springBoot: true
+    image: { repository: trigger-service }
+    port: 8084
+    env:
+      DB_URL: jdbc:postgresql://postgres.example.internal:5432/trigger?sslmode=require
+      DB_USER: trigger_svc
+    secretEnv:
+      - { name: DB_PASSWORD, existingSecret: workflow-platform-db, key: trigger-password }
+      # base64-encoded 32-byte AES key (openssl rand -base64 32). Rotating it makes stored webhook secrets unreadable.
+      - { name: TRIGGER_ENCRYPTION_KEY, existingSecret: workflow-platform-trigger, key: encryption-key }
+
+  web:
+    enabled: true
+    springBoot: false
+    image: { repository: web }
+    port: 3000
+    # Next.js server env (non-secret; PORT is set from `port`). Browser-side NEXT_PUBLIC_* values are usually baked
+    # in at image build time.
+    env:
+      HOSTNAME: 0.0.0.0
+      NODE_ENV: production
+    secretEnv: []
+    resources:
+      requests: { cpu: 100m, memory: 256Mi }
+      limits: { cpu: "1", memory: 512Mi }
+    podAnnotations: {}
+    probes:
+      startupProbe:
+        httpGet: { path: /healthz, port: http }
+        periodSeconds: 5
+        failureThreshold: 24
+      readinessProbe:
+        httpGet: { path: /healthz, port: http }
+        periodSeconds: 10
+        timeoutSeconds: 3
+      livenessProbe:
+        httpGet: { path: /healthz, port: http }
+        periodSeconds: 20
+        timeoutSeconds: 3
+    # Next.js writes its image/fetch cache below .next/cache; keep the root filesystem read-only.
+    extraVolumes:
+      - name: next-cache
+        emptyDir: { sizeLimit: 512Mi }
+    extraVolumeMounts:
+      - name: next-cache
+        mountPath: /app/.next/cache
+
+# ---------------------------------------------------------------------------------------------------------------
+# Ingress: "/" -> web, "/api" -> api-gateway. Actuator endpoints are not routed.
+# ---------------------------------------------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: nginx
+  host: workflows.example.com
+  annotations:
+    # Execution event streams are Server-Sent Events: no buffering, long read timeout.
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-body-size: 1m
+  tls:
+    enabled: true
+    # Created by cert-manager or provided out of band.
+    secretName: workflow-platform-tls
+  paths:
+    - { path: /api, pathType: Prefix, component: api-gateway }
+    - { path: /, pathType: Prefix, component: web }

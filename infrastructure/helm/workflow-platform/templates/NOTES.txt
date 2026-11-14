@@ -1,0 +1,36 @@
+workflow-platform {{ .Chart.AppVersion }} (chart {{ .Chart.Version }}) installed as "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+
+Components:
+{{- range $name, $c := .Values.components }}
+{{- if $c.enabled }}
+  - {{ $name }}: svc/{{ include "wp.componentName" (dict "root" $ "name" $name) }}:{{ $c.port }}  image {{ include "wp.image" (dict "root" $ "c" $c) }}
+{{- end }}
+{{- end }}
+
+Required Secrets (referenced, never created by this chart):
+{{- range $name, $c := .Values.components }}
+{{- if $c.enabled }}
+{{- range $c.secretEnv }}
+  - {{ .existingSecret }} / key {{ .key }}  -> {{ $name }} env {{ .name }}
+{{- end }}
+{{- end }}
+{{- end }}
+  Check: kubectl -n {{ .Release.Namespace }} get pods   (CreateContainerConfigError = missing Secret or key)
+
+Watch the rollout:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }} -w
+
+{{- if .Values.ingress.enabled }}
+
+Ingress: http{{ if .Values.ingress.tls.enabled }}s{{ end }}://{{ .Values.ingress.host }}/  (web)  and  /api  (api-gateway)
+{{- else }}
+
+No Ingress. Port-forward for local access:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "wp.componentName" (dict "root" $ "name" "api-gateway") }} 8080:8080
+{{- if (index .Values.components "web").enabled }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "wp.componentName" (dict "root" $ "name" "web") }} 3000:3000
+{{- end }}
+{{- end }}
+
+Tokens must carry iss={{ .Values.config.OIDC_ISSUER }} (OIDC_ISSUER); signing keys are fetched from {{ .Values.config.OIDC_JWKS_URI }}.
+Runbook: docs/runbooks/kubernetes.md

@@ -1,0 +1,86 @@
+server:
+  port: ${PORT:8084}
+  shutdown: graceful
+
+spring:
+  application:
+    name: trigger-service
+  threads:
+    virtual:
+      enabled: true
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/trigger}
+    username: ${DB_USER:trigger}
+    password: ${DB_PASSWORD:trigger}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      properties:
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
+    consumer:
+      group-id: trigger-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    listener:
+      ack-mode: record
+      observation-enabled: true
+    template:
+      observation-enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${OIDC_ISSUER:http://localhost:8180/realms/workflow-platform}
+          jwk-set-uri: ${OIDC_JWKS_URI:http://localhost:8180/realms/workflow-platform/protocol/openid-connect/certs}
+          audiences: workflow-api
+
+platform:
+  web:
+    max-request-bytes: 262144
+
+trigger:
+  # base64-encoded 32-byte key; provided by the environment / secret store, never committed
+  encryption-key: ${TRIGGER_ENCRYPTION_KEY:}
+  public-base-url: ${PUBLIC_BASE_URL:http://localhost:8080}
+  scheduler:
+    interval: 5s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+  tracing:
+    sampling:
+      probability: ${TRACING_SAMPLING:1.0}
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACES_ENDPOINT:http://localhost:4318/v1/traces}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+logging:
+  structured:
+    format:
+      console: ${LOG_FORMAT:ecs}
+  level:
+    org.apache.kafka: WARN
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs

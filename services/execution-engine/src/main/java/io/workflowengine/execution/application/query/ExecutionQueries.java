@@ -10,8 +10,7 @@ public final class ExecutionQueries {
 
     private ExecutionQueries() {}
 
-    public record ExecutionFilter(
-            UUID workflowId, String status, Instant from, Instant to, int page, int size) {
+    public record ExecutionFilter(UUID workflowId, String status, Instant from, Instant to, int page, int size) {
         public ExecutionFilter {
             if (page < 0 || size < 1 || size > 100) {
                 throw new IllegalArgumentException("page must be >= 0 and size between 1 and 100");

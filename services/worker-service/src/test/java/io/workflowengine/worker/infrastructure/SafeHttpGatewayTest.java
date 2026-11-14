@@ -62,7 +62,8 @@ class SafeHttpGatewayTest {
     }
 
     private static SafeHttpGateway gateway(Set<String> allowed) {
-        return new SafeHttpGateway(new SsrfPolicy(allowed), 1024, Duration.ofSeconds(2), CircuitBreakerRegistry.ofDefaults());
+        return new SafeHttpGateway(
+                new SsrfPolicy(allowed), 1024, Duration.ofSeconds(2), CircuitBreakerRegistry.ofDefaults());
     }
 
     private static HttpGateway.HttpCall get(String url) {
@@ -80,8 +81,10 @@ class SafeHttpGatewayTest {
 
     @Test
     void loopbackIsBlockedUnlessAllowListedByAnAdministrator() {
-        assertThat(code(() -> gateway(Set.of()).send(get("http://localhost:" + port + "/ok")))).isEqualTo("DESTINATION_BLOCKED");
-        assertThat(code(() -> gateway(Set.of()).send(get("http://127.0.0.1:" + port + "/ok")))).isEqualTo("DESTINATION_BLOCKED");
+        assertThat(code(() -> gateway(Set.of()).send(get("http://localhost:" + port + "/ok"))))
+                .isEqualTo("DESTINATION_BLOCKED");
+        assertThat(code(() -> gateway(Set.of()).send(get("http://127.0.0.1:" + port + "/ok"))))
+                .isEqualTo("DESTINATION_BLOCKED");
         HttpGateway.HttpResponseData ok = gateway(Set.of("localhost")).send(get("http://localhost:" + port + "/ok"));
         assertThat(ok.status()).isEqualTo(200);
     }
@@ -90,7 +93,8 @@ class SafeHttpGatewayTest {
     void redirectsAreFollowedAndEachHopIsRevalidated() {
         SafeHttpGateway gw = gateway(Set.of("localhost"));
         assertThat(gw.send(get("http://localhost:" + port + "/to-ok")).status()).isEqualTo(200);
-        assertThat(code(() -> gw.send(get("http://localhost:" + port + "/to-metadata")))).isEqualTo("DESTINATION_BLOCKED");
+        assertThat(code(() -> gw.send(get("http://localhost:" + port + "/to-metadata"))))
+                .isEqualTo("DESTINATION_BLOCKED");
     }
 
     @Test
@@ -101,21 +105,38 @@ class SafeHttpGatewayTest {
 
     @Test
     void nonHttpSchemesAndUserInfoAreRejected() {
-        assertThat(code(() -> gateway(Set.of()).send(get("file:///etc/passwd")))).isEqualTo("DESTINATION_BLOCKED");
-        assertThat(code(() -> gateway(Set.of()).send(get("http://user:pw@example.com/")))).isEqualTo("DESTINATION_BLOCKED");
+        assertThat(code(() -> gateway(Set.of()).send(get("file:///etc/passwd"))))
+                .isEqualTo("DESTINATION_BLOCKED");
+        assertThat(code(() -> gateway(Set.of()).send(get("http://user:pw@example.com/"))))
+                .isEqualTo("DESTINATION_BLOCKED");
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"127.0.0.1", "10.1.2.3", "172.16.0.1", "192.168.1.1", "169.254.169.254", "100.64.0.1",
-            "0.0.0.0", "::1", "fd00::1", "fe80::1", "::ffff:127.0.0.1", "224.0.0.1"})
+    @ValueSource(
+            strings = {
+                "127.0.0.1",
+                "10.1.2.3",
+                "172.16.0.1",
+                "192.168.1.1",
+                "169.254.169.254",
+                "100.64.0.1",
+                "0.0.0.0",
+                "::1",
+                "fd00::1",
+                "fe80::1",
+                "::ffff:127.0.0.1",
+                "224.0.0.1"
+            })
     void ssrfPolicyBlocksInternalRanges(String address) throws Exception {
-        assertThat(new SsrfPolicy(Set.of()).isBlocked(InetAddress.getByName(address))).isTrue();
+        assertThat(new SsrfPolicy(Set.of()).isBlocked(InetAddress.getByName(address)))
+                .isTrue();
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"8.8.8.8", "1.1.1.1", "2606:4700:4700::1111"})
     void ssrfPolicyAllowsPublicAddresses(String address) throws Exception {
-        assertThat(new SsrfPolicy(Set.of()).isBlocked(InetAddress.getByName(address))).isFalse();
+        assertThat(new SsrfPolicy(Set.of()).isBlocked(InetAddress.getByName(address)))
+                .isFalse();
     }
 
     @Test

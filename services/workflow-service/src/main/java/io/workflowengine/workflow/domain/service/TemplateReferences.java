@@ -53,8 +53,8 @@ public final class TemplateReferences {
         if (node.matches()) {
             return new Reference(expression, true, node.group(1));
         }
-        boolean valid =
-                TRIGGER.matcher(expression).matches() || EXECUTION.matcher(expression).matches();
+        boolean valid = TRIGGER.matcher(expression).matches()
+                || EXECUTION.matcher(expression).matches();
         return new Reference(expression, valid, null);
     }
 }

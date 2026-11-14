@@ -29,7 +29,8 @@ public class ExecutionSweeper {
     private final Clock clock;
     private final AtomicLong active = new AtomicLong();
 
-    public ExecutionSweeper(ExecutionRepository repository, ExecutionService service, Clock clock, MeterRegistry registry) {
+    public ExecutionSweeper(
+            ExecutionRepository repository, ExecutionService service, Clock clock, MeterRegistry registry) {
         this.repository = repository;
         this.service = service;
         this.clock = clock;

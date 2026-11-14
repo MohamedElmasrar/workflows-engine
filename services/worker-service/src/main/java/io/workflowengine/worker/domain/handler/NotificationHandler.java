@@ -47,7 +47,8 @@ public class NotificationHandler implements NodeHandler {
         }
         String subject = config.path("subject").asText("Workflow notification");
         channel.send(new NotificationChannel.Notification(recipient, subject, message, context.idempotencyKey()));
-        return NodeResult.success(JsonNodeFactory.instance.objectNode()
+        return NodeResult.success(JsonNodeFactory.instance
+                .objectNode()
                 .put("channel", channelName)
                 .put("recipient", recipient)
                 .put("subject", subject)

@@ -25,8 +25,11 @@ public class EdgeFilters {
     GlobalFilter correlationIdFilter() {
         return (exchange, chain) -> {
             String incoming = exchange.getRequest().getHeaders().getFirst(CORRELATION_HEADER);
-            String id = incoming != null && SAFE.matcher(incoming).matches() ? incoming : UUID.randomUUID().toString();
-            ServerHttpRequest request = exchange.getRequest().mutate()
+            String id = incoming != null && SAFE.matcher(incoming).matches()
+                    ? incoming
+                    : UUID.randomUUID().toString();
+            ServerHttpRequest request = exchange.getRequest()
+                    .mutate()
                     .headers(h -> h.set(CORRELATION_HEADER, id))
                     .build();
             exchange.getResponse().getHeaders().set(CORRELATION_HEADER, id);
@@ -50,6 +53,8 @@ public class EdgeFilters {
 
     private static String clientIp(ServerHttpRequest request) {
         InetSocketAddress remote = request.getRemoteAddress();
-        return remote == null || remote.getAddress() == null ? "unknown" : remote.getAddress().getHostAddress();
+        return remote == null || remote.getAddress() == null
+                ? "unknown"
+                : remote.getAddress().getHostAddress();
     }
 }

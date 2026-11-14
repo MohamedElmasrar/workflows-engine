@@ -99,7 +99,14 @@ class ContractSchemaTest {
     @Test
     void envelopeRoundTripsThroughJson() throws IOException {
         EventEnvelope envelope = new EventEnvelope(
-                ID, "WorkflowArchived", 1, ID.toString(), "c", "d", NOW, MAPPER.valueToTree(new WorkflowArchived(ID, NOW)));
+                ID,
+                "WorkflowArchived",
+                1,
+                ID.toString(),
+                "c",
+                "d",
+                NOW,
+                MAPPER.valueToTree(new WorkflowArchived(ID, NOW)));
         EventEnvelope copy = MAPPER.readValue(MAPPER.writeValueAsBytes(envelope), EventEnvelope.class);
         assertThat(copy).isEqualTo(envelope);
         assertThat(MAPPER.treeToValue(copy.payload(), WorkflowArchived.class).workflowId())
@@ -117,7 +124,9 @@ class ContractSchemaTest {
         ((ObjectNode) definition.withArray("nodes").get(0)).put("type", "SHELL");
         ((ObjectNode) definition.withArray("nodes").get(2).get("config")).put("method", "TRACE");
         Set<ValidationMessage> errors = validate("workflow-definition.v1.json", definition);
-        assertThat(errors).extracting(ValidationMessage::getInstanceLocation).map(Object::toString)
+        assertThat(errors)
+                .extracting(ValidationMessage::getInstanceLocation)
+                .map(Object::toString)
                 .contains("/nodes/0/type", "/nodes/2/config/method");
     }
 

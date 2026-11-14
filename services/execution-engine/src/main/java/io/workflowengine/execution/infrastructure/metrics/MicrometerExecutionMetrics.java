@@ -34,8 +34,12 @@ public class MicrometerExecutionMetrics implements ExecutionMetrics {
         afterCommit(() -> {
             for (ExecutionEffect effect : effects) {
                 switch (effect) {
-                    case ExecutionEffect.LifecycleChanged l when l.status() == ExecutionStatus.RUNNING ->
-                            Counter.builder("workflow.executions.started").tag("trigger", trigger).register(registry).increment();
+                    case ExecutionEffect.LifecycleChanged l
+                    when l.status() == ExecutionStatus.RUNNING ->
+                        Counter.builder("workflow.executions.started")
+                                .tag("trigger", trigger)
+                                .register(registry)
+                                .increment();
                     case ExecutionEffect.LifecycleChanged l -> {
                         Counter.builder("workflow.executions.finished")
                                 .tag("status", l.status().name())
@@ -50,19 +54,25 @@ public class MicrometerExecutionMetrics implements ExecutionMetrics {
                                     .record(Duration.between(startedAt, Instant.now()));
                         }
                     }
-                    case ExecutionEffect.DispatchNode d -> Counter.builder("workflow.node.tasks.dispatched")
-                            .tag("nodeType", d.task().nodeType().name())
-                            .register(registry)
-                            .increment();
+                    case ExecutionEffect.DispatchNode d ->
+                        Counter.builder("workflow.node.tasks.dispatched")
+                                .tag("nodeType", d.task().nodeType().name())
+                                .register(registry)
+                                .increment();
                     case ExecutionEffect.NodeAttemptFinished f -> {
                         Timer.builder("workflow.node.duration")
                                 .tag("nodeType", f.nodeType())
-                                .tag("outcome", f.willRetry() ? "RETRY" : f.outcome().name())
+                                .tag(
+                                        "outcome",
+                                        f.willRetry() ? "RETRY" : f.outcome().name())
                                 .publishPercentileHistogram()
                                 .register(registry)
                                 .record(Duration.ofMillis(f.durationMs()));
                         if (f.willRetry()) {
-                            Counter.builder("workflow.node.retries").tag("nodeType", f.nodeType()).register(registry).increment();
+                            Counter.builder("workflow.node.retries")
+                                    .tag("nodeType", f.nodeType())
+                                    .register(registry)
+                                    .increment();
                         }
                     }
                 }
@@ -72,12 +82,18 @@ public class MicrometerExecutionMetrics implements ExecutionMetrics {
 
     @Override
     public void staleResult(String kind) {
-        Counter.builder("workflow.results.stale").tag("kind", kind).register(registry).increment();
+        Counter.builder("workflow.results.stale")
+                .tag("kind", kind)
+                .register(registry)
+                .increment();
     }
 
     @Override
     public void duplicateMessage(String consumer) {
-        afterCommit(() -> Counter.builder("workflow.messages.duplicate").tag("consumer", consumer).register(registry).increment());
+        afterCommit(() -> Counter.builder("workflow.messages.duplicate")
+                .tag("consumer", consumer)
+                .register(registry)
+                .increment());
     }
 
     @Override

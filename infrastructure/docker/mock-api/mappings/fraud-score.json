@@ -1,0 +1,30 @@
+{
+  "mappings": [
+    {
+      "name": "Fraud score: amount > 100 is high risk",
+      "request": { "method": "POST", "urlPath": "/fraud-score",
+                   "bodyPatterns": [ { "matchesJsonPath": "$[?(@.amount > 100)]" } ] },
+      "response": { "status": 200, "headers": { "Content-Type": "application/json" },
+                    "jsonBody": { "score": 85, "reason": "large amount" }, "fixedDelayMilliseconds": 150 }
+    },
+    {
+      "name": "Fraud score: otherwise low risk",
+      "priority": 10,
+      "request": { "method": "POST", "urlPath": "/fraud-score" },
+      "response": { "status": 200, "headers": { "Content-Type": "application/json" },
+                    "jsonBody": { "score": 12, "reason": "normal" }, "fixedDelayMilliseconds": 150 }
+    },
+    {
+      "name": "Slow endpoint used to demonstrate worker crashes",
+      "request": { "method": "POST", "urlPath": "/slow" },
+      "response": { "status": 200, "headers": { "Content-Type": "application/json" },
+                    "jsonBody": { "ok": true }, "fixedDelayMilliseconds": 8000 }
+    },
+    {
+      "name": "Always failing endpoint (retry and failure inspection demo)",
+      "request": { "method": "ANY", "urlPath": "/unavailable" },
+      "response": { "status": 503, "headers": { "Content-Type": "application/json" },
+                    "jsonBody": { "error": "maintenance" } }
+    }
+  ]
+}

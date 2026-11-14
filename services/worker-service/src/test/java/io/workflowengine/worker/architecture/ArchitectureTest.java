@@ -14,21 +14,33 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule layers = Architectures.layeredArchitecture()
             .consideringOnlyDependenciesInLayers()
-            .layer("Domain").definedBy("..domain..")
-            .layer("Application").definedBy("..application..")
-            .layer("Infrastructure").definedBy("..infrastructure..")
-            .whereLayer("Infrastructure").mayNotBeAccessedByAnyLayer()
-            .whereLayer("Application").mayOnlyBeAccessedByLayers("Infrastructure")
-            .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Infrastructure");
+            .layer("Domain")
+            .definedBy("..domain..")
+            .layer("Application")
+            .definedBy("..application..")
+            .layer("Infrastructure")
+            .definedBy("..infrastructure..")
+            .whereLayer("Infrastructure")
+            .mayNotBeAccessedByAnyLayer()
+            .whereLayer("Application")
+            .mayOnlyBeAccessedByLayers("Infrastructure")
+            .whereLayer("Domain")
+            .mayOnlyBeAccessedByLayers("Application", "Infrastructure");
 
     @ArchTest
     static final ArchRule domainIsFrameworkFree = noClasses()
-            .that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..", "org.apache.hc..", "org.apache.kafka..", "io.github.resilience4j..");
+            .that()
+            .resideInAPackage("..domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage(
+                    "org.springframework..", "org.apache.hc..", "org.apache.kafka..", "io.github.resilience4j..");
 
     @ArchTest
     static final ArchRule handlersDoNotTouchMessaging = noClasses()
-            .that().resideInAPackage("..domain.handler..")
-            .should().dependOnClassesThat().resideInAnyPackage("..application..", "..infrastructure..");
+            .that()
+            .resideInAPackage("..domain.handler..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage("..application..", "..infrastructure..");
 }

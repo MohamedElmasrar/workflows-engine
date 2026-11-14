@@ -18,7 +18,8 @@ class TransformHandlerTest {
 
     @Test
     void picksRenamesAndSetsFields() {
-        JsonNode out = run("""
+        JsonNode out = run(
+                """
                 {"source": {"id": 1, "name": "Ada", "password": "x"}, "pick": ["id", "name"],
                  "rename": {"name": "fullName"}, "set": {"source": "crm", "id": 2}}""");
         assertThat(out.toString()).isEqualTo("{\"id\":2,\"fullName\":\"Ada\",\"source\":\"crm\"}");
@@ -26,7 +27,10 @@ class TransformHandlerTest {
 
     @Test
     void constructsObjectsFromSetOnly() {
-        assertThat(run("{\"set\": {\"a\": [1,2], \"b\": {\"c\": true}}}").at("/b/c").asBoolean()).isTrue();
+        assertThat(run("{\"set\": {\"a\": [1,2], \"b\": {\"c\": true}}}")
+                        .at("/b/c")
+                        .asBoolean())
+                .isTrue();
     }
 
     @Test

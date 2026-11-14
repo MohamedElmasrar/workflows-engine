@@ -31,7 +31,8 @@ public class JpaWorkflowVersionRepository implements WorkflowVersionRepository {
 
     @Override
     public Optional<WorkflowVersion> find(UUID workflowId, int version) {
-        return jpa.findById(new WorkflowVersionEntity.Key(workflowId, version)).map(JpaWorkflowVersionRepository::toDomain);
+        return jpa.findById(new WorkflowVersionEntity.Key(workflowId, version))
+                .map(JpaWorkflowVersionRepository::toDomain);
     }
 
     @Override

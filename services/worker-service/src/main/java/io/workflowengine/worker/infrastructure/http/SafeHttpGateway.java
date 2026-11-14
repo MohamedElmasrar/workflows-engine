@@ -44,7 +44,8 @@ public class SafeHttpGateway implements HttpGateway {
     private final long maxResponseBytes;
     private final CircuitBreakerRegistry breakers;
 
-    public SafeHttpGateway(SsrfPolicy policy, long maxResponseBytes, Duration connectTimeout, CircuitBreakerRegistry breakers) {
+    public SafeHttpGateway(
+            SsrfPolicy policy, long maxResponseBytes, Duration connectTimeout, CircuitBreakerRegistry breakers) {
         this.policy = policy;
         this.maxResponseBytes = maxResponseBytes;
         this.breakers = breakers;
@@ -81,7 +82,8 @@ public class SafeHttpGateway implements HttpGateway {
                 return response;
             }
             uri = uri.resolve(location);
-            if (response.status() == 303 || ((response.status() == 301 || response.status() == 302) && !method.equals("GET"))) {
+            if (response.status() == 303
+                    || ((response.status() == 301 || response.status() == 302) && !method.equals("GET"))) {
                 method = "GET";
                 body = null;
             }
@@ -89,7 +91,8 @@ public class SafeHttpGateway implements HttpGateway {
         throw new NodeExecutionException("TOO_MANY_REDIRECTS", "More than " + MAX_REDIRECTS + " redirects", false);
     }
 
-    private HttpResponseData sendOnce(String method, URI uri, Map<String, String> headers, byte[] body, Duration timeout) {
+    private HttpResponseData sendOnce(
+            String method, URI uri, Map<String, String> headers, byte[] body, Duration timeout) {
         CircuitBreaker breaker = breakers.circuitBreaker("http:" + uri.getHost().toLowerCase());
         try {
             return breaker.executeCallable(() -> {
@@ -110,9 +113,13 @@ public class SafeHttpGateway implements HttpGateway {
         } catch (NodeExecutionException e) {
             throw e;
         } catch (IOException e) {
-            log.info("HTTP {} {} failed: {}", method, uri.getHost(), e.getClass().getSimpleName());
+            log.info(
+                    "HTTP {} {} failed: {}", method, uri.getHost(), e.getClass().getSimpleName());
             throw new NodeExecutionException(
-                    "HTTP_CONNECTION_ERROR", "Request to " + uri.getHost() + " failed: " + e.getClass().getSimpleName(), true, e);
+                    "HTTP_CONNECTION_ERROR",
+                    "Request to " + uri.getHost() + " failed: " + e.getClass().getSimpleName(),
+                    true,
+                    e);
         } catch (Exception e) {
             throw new NodeExecutionException("HTTP_CONNECTION_ERROR", "Request failed: " + e.getMessage(), true, e);
         }
@@ -137,7 +144,12 @@ public class SafeHttpGateway implements HttpGateway {
         long started = System.nanoTime();
         return client.execute(request, response -> {
             HttpResponseData data = read(response);
-            log.info("HTTP {} {} -> {} in {} ms", method, uri.getHost(), data.status(), (System.nanoTime() - started) / 1_000_000);
+            log.info(
+                    "HTTP {} {} -> {} in {} ms",
+                    method,
+                    uri.getHost(),
+                    data.status(),
+                    (System.nanoTime() - started) / 1_000_000);
             return data;
         });
     }
@@ -145,7 +157,8 @@ public class SafeHttpGateway implements HttpGateway {
     private HttpResponseData read(ClassicHttpResponse response) throws IOException {
         Map<String, List<String>> headers = new LinkedHashMap<>();
         for (Header h : response.getHeaders()) {
-            headers.computeIfAbsent(h.getName().toLowerCase(), k -> new java.util.ArrayList<>()).add(h.getValue());
+            headers.computeIfAbsent(h.getName().toLowerCase(), k -> new java.util.ArrayList<>())
+                    .add(h.getValue());
         }
         HttpEntity entity = response.getEntity();
         byte[] body = new byte[0];
@@ -153,13 +166,15 @@ public class SafeHttpGateway implements HttpGateway {
         if (entity != null) {
             contentType = entity.getContentType();
             if (entity.getContentLength() > maxResponseBytes) {
-                throw new NodeExecutionException("RESPONSE_TOO_LARGE", "Response exceeds " + maxResponseBytes + " bytes", false);
+                throw new NodeExecutionException(
+                        "RESPONSE_TOO_LARGE", "Response exceeds " + maxResponseBytes + " bytes", false);
             }
             try (InputStream in = entity.getContent()) {
                 body = in.readNBytes((int) maxResponseBytes + 1);
             }
             if (body.length > maxResponseBytes) {
-                throw new NodeExecutionException("RESPONSE_TOO_LARGE", "Response exceeds " + maxResponseBytes + " bytes", false);
+                throw new NodeExecutionException(
+                        "RESPONSE_TOO_LARGE", "Response exceeds " + maxResponseBytes + " bytes", false);
             }
         }
         return new HttpResponseData(response.getCode(), headers, body, contentType);
@@ -181,7 +196,8 @@ public class SafeHttpGateway implements HttpGateway {
         if (!policy.isAllowListed(host) && (literal.matches("[0-9.]+") || literal.contains(":"))) {
             try {
                 if (policy.isBlocked(java.net.InetAddress.getByName(literal))) {
-                    throw new NodeExecutionException("DESTINATION_BLOCKED", "Destination address " + literal + " is not allowed", false);
+                    throw new NodeExecutionException(
+                            "DESTINATION_BLOCKED", "Destination address " + literal + " is not allowed", false);
                 }
             } catch (java.net.UnknownHostException e) {
                 throw NodeExecutionException.invalidConfig("Invalid host " + host);

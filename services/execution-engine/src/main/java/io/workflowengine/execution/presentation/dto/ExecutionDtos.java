@@ -82,6 +82,10 @@ public final class ExecutionDtos {
     public record PageResponse<T>(List<T> items, int page, int size, long totalItems, int totalPages) {}
 
     public record StatsResponse(
-            long executionsToday, long completedToday, long failedToday, long running, long pending,
+            long executionsToday,
+            long completedToday,
+            long failedToday,
+            long running,
+            long pending,
             List<ExecutionSummaryResponse> recent) {}
 }

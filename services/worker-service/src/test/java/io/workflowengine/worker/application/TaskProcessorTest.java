@@ -53,8 +53,15 @@ class TaskProcessorTest {
 
             public void cachedResultReplayed(String t) {}
         };
-        return new TaskProcessor(new NodeHandlerRegistry(List.of(handler)), (type, key, payload) -> published.add(new Published(type, payload)),
-                attemptCache, metrics, Executors.newVirtualThreadPerTaskExecutor(), json, Clock.systemUTC(), "w1");
+        return new TaskProcessor(
+                new NodeHandlerRegistry(List.of(handler)),
+                (type, key, payload) -> published.add(new Published(type, payload)),
+                attemptCache,
+                metrics,
+                Executors.newVirtualThreadPerTaskExecutor(),
+                json,
+                Clock.systemUTC(),
+                "w1");
     }
 
     private static NodeHandler handler(java.util.function.Function<NodeExecutionContext, NodeResult> body) {
@@ -70,7 +77,8 @@ class TaskProcessorTest {
     }
 
     private static NodeExecutionScheduled task(UUID attemptId, long timeoutMs) {
-        return new NodeExecutionScheduled(UUID.randomUUID(), UUID.randomUUID(), "n", "LOG", attemptId, 1, timeoutMs, json("{}"));
+        return new NodeExecutionScheduled(
+                UUID.randomUUID(), UUID.randomUUID(), "n", "LOG", attemptId, 1, timeoutMs, json("{}"));
     }
 
     @Test
@@ -81,7 +89,8 @@ class TaskProcessorTest {
         }));
         NodeExecutionScheduled t = task(UUID.randomUUID(), 1000);
         p.process(t);
-        assertThat(published).extracting(Published::type)
+        assertThat(published)
+                .extracting(Published::type)
                 .containsExactly(EventTypes.NODE_EXECUTION_STARTED, EventTypes.NODE_EXECUTION_COMPLETED);
         assertThat(cache).containsKey(t.attemptId());
 
@@ -109,25 +118,36 @@ class TaskProcessorTest {
 
     @Test
     void classifiedExceptionsBecomeFailuresAndUnexpectedOnesAreRetryable() {
-        processor(handler(c -> { throw new NodeExecutionException("HTTP_4XX", "nope", false); }))
+        processor(handler(c -> {
+                    throw new NodeExecutionException("HTTP_4XX", "nope", false);
+                }))
                 .process(task(UUID.randomUUID(), 1000));
-        processor(handler(c -> { throw new IllegalStateException("bug"); })).process(task(UUID.randomUUID(), 1000));
-        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().retryable()).isFalse();
-        assertThat(((NodeExecutionFailed) published.get(3).payload()).error().code()).isEqualTo("HANDLER_ERROR");
+        processor(handler(c -> {
+                    throw new IllegalStateException("bug");
+                }))
+                .process(task(UUID.randomUUID(), 1000));
+        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().retryable())
+                .isFalse();
+        assertThat(((NodeExecutionFailed) published.get(3).payload()).error().code())
+                .isEqualTo("HANDLER_ERROR");
     }
 
     @Test
     void oversizedOutputIsRejected() {
         String big = "x".repeat(TaskProcessor.MAX_OUTPUT_BYTES + 1);
-        processor(handler(c -> NodeResult.success(JsonNodeFactory.instance.textNode(big)))).process(task(UUID.randomUUID(), 2000));
-        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().code()).isEqualTo("OUTPUT_TOO_LARGE");
+        processor(handler(c -> NodeResult.success(JsonNodeFactory.instance.textNode(big))))
+                .process(task(UUID.randomUUID(), 2000));
+        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().code())
+                .isEqualTo("OUTPUT_TOO_LARGE");
     }
 
     @Test
     void unsupportedTypesFailWithoutRetry() {
         TaskProcessor p = processor(handler(c -> NodeResult.success(null)));
-        p.process(new NodeExecutionScheduled(UUID.randomUUID(), UUID.randomUUID(), "n", "DELAY", UUID.randomUUID(), 1, 1000, json("{}")));
-        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().code()).isEqualTo("UNSUPPORTED_NODE_TYPE");
+        p.process(new NodeExecutionScheduled(
+                UUID.randomUUID(), UUID.randomUUID(), "n", "DELAY", UUID.randomUUID(), 1, 1000, json("{}")));
+        assertThat(((NodeExecutionFailed) published.get(1).payload()).error().code())
+                .isEqualTo("UNSUPPORTED_NODE_TYPE");
     }
 
     @Test

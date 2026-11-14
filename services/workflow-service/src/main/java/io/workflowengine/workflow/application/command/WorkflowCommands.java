@@ -11,7 +11,8 @@ public final class WorkflowCommands {
 
     public record CreateWorkflow(String name, String description, JsonNode definition) {}
 
-    public record UpdateWorkflow(UUID workflowId, long expectedRevision, String name, String description, JsonNode definition) {}
+    public record UpdateWorkflow(
+            UUID workflowId, long expectedRevision, String name, String description, JsonNode definition) {}
 
     public record GrantPermission(UUID workflowId, String username, WorkflowRole role) {}
 

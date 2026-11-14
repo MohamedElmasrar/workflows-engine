@@ -27,8 +27,14 @@ public class JdbcDeliveryRepository implements DeliveryRepository {
                     payload_bytes, received_at)
                 values (?, ?, ?, ?, ?, ?, ?, ?) on conflict (dedupe_key) do nothing
                 """,
-                d.id(), d.workflowId(), d.triggerType(), d.dedupeKey(), d.executionId(), d.executionStatus(),
-                d.payloadBytes(), Timestamp.from(d.receivedAt()));
+                d.id(),
+                d.workflowId(),
+                d.triggerType(),
+                d.dedupeKey(),
+                d.executionId(),
+                d.executionStatus(),
+                d.payloadBytes(),
+                Timestamp.from(d.receivedAt()));
         if (inserted == 1) {
             return new InsertResult(d, true);
         }
@@ -53,15 +59,24 @@ public class JdbcDeliveryRepository implements DeliveryRepository {
 
     @Override
     public Optional<Delivery> byExecution(UUID executionId) {
-        return jdbc.query("select * from trigger_delivery where execution_id = ?", JdbcDeliveryRepository::map, executionId)
+        return jdbc
+                .query(
+                        "select * from trigger_delivery where execution_id = ?",
+                        JdbcDeliveryRepository::map,
+                        executionId)
                 .stream()
                 .findFirst();
     }
 
     private static Delivery map(ResultSet rs, int i) throws SQLException {
         return new Delivery(
-                rs.getObject("id", UUID.class), rs.getObject("workflow_id", UUID.class), rs.getString("trigger_type"),
-                rs.getString("dedupe_key"), rs.getObject("execution_id", UUID.class), rs.getString("execution_status"),
-                rs.getInt("payload_bytes"), rs.getTimestamp("received_at").toInstant());
+                rs.getObject("id", UUID.class),
+                rs.getObject("workflow_id", UUID.class),
+                rs.getString("trigger_type"),
+                rs.getString("dedupe_key"),
+                rs.getObject("execution_id", UUID.class),
+                rs.getString("execution_status"),
+                rs.getInt("payload_bytes"),
+                rs.getTimestamp("received_at").toInstant());
     }
 }

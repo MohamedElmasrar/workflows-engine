@@ -19,8 +19,8 @@ import io.workflowengine.execution.domain.model.EngineSettings;
 import io.workflowengine.execution.domain.model.ExecutionError;
 import io.workflowengine.execution.domain.model.ExecutionGraph;
 import io.workflowengine.execution.domain.model.ExecutionStatus;
-import io.workflowengine.execution.domain.model.NodeFailure;
 import io.workflowengine.execution.domain.model.NodeExecution;
+import io.workflowengine.execution.domain.model.NodeFailure;
 import io.workflowengine.execution.domain.model.PublishedVersion;
 import io.workflowengine.execution.domain.model.ResultOutcome;
 import io.workflowengine.execution.domain.model.TriggerType;
@@ -74,9 +74,10 @@ public class ExecutionService {
     }
 
     /** Manual start by a user. Requires EDITOR or OWNER on the workflow. */
-    public StartResult startManual(Actor actor, UUID workflowId, Integer version, JsonNode input, String idempotencyKey) {
-        WorkflowAccess access = catalog.access(workflowId)
-                .orElseThrow(() -> new ExecutionNotFoundException("Workflow " + workflowId));
+    public StartResult startManual(
+            Actor actor, UUID workflowId, Integer version, JsonNode input, String idempotencyKey) {
+        WorkflowAccess access =
+                catalog.access(workflowId).orElseThrow(() -> new ExecutionNotFoundException("Workflow " + workflowId));
         if (!ExecutionAccessPolicy.canView(access, actor)) {
             throw new ExecutionNotFoundException("Workflow " + workflowId);
         }
@@ -85,7 +86,14 @@ public class ExecutionService {
             throw new ExecutionStateException("Archived workflows cannot be executed");
         }
         return start(new StartExecution(
-                UUID.randomUUID(), workflowId, version, input, TriggerType.MANUAL, "user:" + actor.userId(), idempotencyKey, null));
+                UUID.randomUUID(),
+                workflowId,
+                version,
+                input,
+                TriggerType.MANUAL,
+                "user:" + actor.userId(),
+                idempotencyKey,
+                null));
     }
 
     /**
@@ -114,7 +122,8 @@ public class ExecutionService {
                 return new StartResult(command.executionId(), false);
             }
             if (command.idempotencyKey() != null) {
-                Optional<UUID> existing = executions.findIdByIdempotencyKey(command.workflowId(), command.idempotencyKey());
+                Optional<UUID> existing =
+                        executions.findIdByIdempotencyKey(command.workflowId(), command.idempotencyKey());
                 if (existing.isPresent()) {
                     return new StartResult(existing.get(), false);
                 }
@@ -140,7 +149,9 @@ public class ExecutionService {
                     command.retryOf(),
                     settings,
                     now);
-            boolean archived = catalog.access(command.workflowId()).map(WorkflowAccess::archived).orElse(false);
+            boolean archived = catalog.access(command.workflowId())
+                    .map(WorkflowAccess::archived)
+                    .orElse(false);
             if (archived) {
                 execution.failBeforeStart(new ExecutionError("WORKFLOW_ARCHIVED", "The workflow is archived"), now);
             } else {
@@ -161,7 +172,8 @@ public class ExecutionService {
 
     /** Retrying creates a new execution of the same version with the same input, linked to the original. */
     public StartResult retry(RetryExecution command) {
-        WorkflowExecution original = executions.find(command.executionId())
+        WorkflowExecution original = executions
+                .find(command.executionId())
                 .orElseThrow(() -> new ExecutionNotFoundException("Execution " + command.executionId()));
         WorkflowAccess access = catalog.access(original.workflowId()).orElse(null);
         if (!ExecutionAccessPolicy.canView(access, command.actor())) {
@@ -185,26 +197,45 @@ public class ExecutionService {
     // ------------------------------------------------------------- worker results (called by Kafka consumers)
 
     public ResultOutcome nodeStarted(UUID eventId, UUID executionId, String nodeId, UUID attemptId, String workerId) {
-        return apply(eventId, executionId, e -> {
-            Instant now = clock.instant();
-            ResultOutcome outcome = e.onNodeStarted(nodeId, attemptId, workerId, now);
-            if (outcome == ResultOutcome.APPLIED) {
-                NodeExecution node = e.node(nodeId);
-                node.currentAttempt()
-                        .ifPresent(a -> metrics.queueLatency(node.nodeType(), Duration.between(a.dispatchedAt(), now)));
-            }
-            return outcome;
-        }, "started");
+        return apply(
+                eventId,
+                executionId,
+                e -> {
+                    Instant now = clock.instant();
+                    ResultOutcome outcome = e.onNodeStarted(nodeId, attemptId, workerId, now);
+                    if (outcome == ResultOutcome.APPLIED) {
+                        NodeExecution node = e.node(nodeId);
+                        node.currentAttempt()
+                                .ifPresent(a ->
+                                        metrics.queueLatency(node.nodeType(), Duration.between(a.dispatchedAt(), now)));
+                    }
+                    return outcome;
+                },
+                "started");
     }
 
     public ResultOutcome nodeCompleted(
-            UUID eventId, UUID executionId, String nodeId, UUID attemptId, JsonNode output, String branch, String workerId) {
-        return apply(eventId, executionId, e -> e.onNodeCompleted(nodeId, attemptId, output, branch, workerId, clock.instant()), "completed");
+            UUID eventId,
+            UUID executionId,
+            String nodeId,
+            UUID attemptId,
+            JsonNode output,
+            String branch,
+            String workerId) {
+        return apply(
+                eventId,
+                executionId,
+                e -> e.onNodeCompleted(nodeId, attemptId, output, branch, workerId, clock.instant()),
+                "completed");
     }
 
     public ResultOutcome nodeFailed(
             UUID eventId, UUID executionId, String nodeId, UUID attemptId, NodeFailure failure, String workerId) {
-        return apply(eventId, executionId, e -> e.onNodeFailed(nodeId, attemptId, failure, workerId, clock.instant()), "failed");
+        return apply(
+                eventId,
+                executionId,
+                e -> e.onNodeFailed(nodeId, attemptId, failure, workerId, clock.instant()),
+                "failed");
     }
 
     // ------------------------------------------------------------- timers (called by the sweeper)
@@ -272,7 +303,8 @@ public class ExecutionService {
 
     private void mutate(UUID executionId, Actor actor, Function<WorkflowExecution, Void> change) {
         tx.inTransaction(() -> {
-            WorkflowExecution execution = executions.loadForUpdate(executionId)
+            WorkflowExecution execution = executions
+                    .loadForUpdate(executionId)
                     .orElseThrow(() -> new ExecutionNotFoundException("Execution " + executionId));
             WorkflowAccess access = catalog.access(execution.workflowId()).orElse(null);
             if (!ExecutionAccessPolicy.canView(access, actor)) {
@@ -299,7 +331,8 @@ public class ExecutionService {
     /** The requested version has not (yet) been received from the workflow service. */
     public static class VersionNotAvailableException extends RuntimeException {
         public VersionNotAvailableException(UUID workflowId, Integer version) {
-            super("Workflow " + workflowId + (version == null ? " has no published version" : " version " + version + " is not available")
+            super("Workflow " + workflowId
+                    + (version == null ? " has no published version" : " version " + version + " is not available")
                     + " yet; publication may still be propagating");
         }
     }

@@ -24,7 +24,12 @@ public class WorkflowProjectionService {
     }
 
     public void accessUpdated(
-            UUID eventId, UUID workflowId, String ownerId, long aclRevision, boolean archived, Map<String, String> roles) {
+            UUID eventId,
+            UUID workflowId,
+            String ownerId,
+            long aclRevision,
+            boolean archived,
+            Map<String, String> roles) {
         once(eventId, () -> catalog.replaceAccess(workflowId, ownerId, aclRevision, archived, roles));
     }
 

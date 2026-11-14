@@ -16,7 +16,8 @@ public class SsrfPolicy {
     private final Set<String> allowedHosts;
 
     public SsrfPolicy(Set<String> allowedHosts) {
-        this.allowedHosts = allowedHosts.stream().map(h -> h.toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toSet());
+        this.allowedHosts =
+                allowedHosts.stream().map(h -> h.toLowerCase(Locale.ROOT)).collect(java.util.stream.Collectors.toSet());
     }
 
     public boolean isAllowListed(String host) {
@@ -65,7 +66,8 @@ public class SsrfPolicy {
         }
         boolean mapped = firstTenZero && (b[10] & 0xff) == 0xff && (b[11] & 0xff) == 0xff;
         boolean compatible = firstTenZero && b[10] == 0 && b[11] == 0;
-        boolean nat64 = (b[0] & 0xff) == 0x00 && (b[1] & 0xff) == 0x64 && (b[2] & 0xff) == 0xff && (b[3] & 0xff) == 0x9b;
+        boolean nat64 =
+                (b[0] & 0xff) == 0x00 && (b[1] & 0xff) == 0x64 && (b[2] & 0xff) == 0xff && (b[3] & 0xff) == 0x9b;
         return mapped || compatible || nat64;
     }
 }

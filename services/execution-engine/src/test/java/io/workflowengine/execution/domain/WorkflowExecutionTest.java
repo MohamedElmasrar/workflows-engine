@@ -36,8 +36,18 @@ class WorkflowExecutionTest {
 
     private WorkflowExecution start(ExecutionGraph graph, String input) {
         execution = WorkflowExecution.create(
-                UUID.randomUUID(), UUID.randomUUID(), 1, "test", graph, TriggerType.MANUAL, "user", json(input), null,
-                null, SETTINGS, T0);
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                1,
+                "test",
+                graph,
+                TriggerType.MANUAL,
+                "user",
+                json(input),
+                null,
+                null,
+                SETTINGS,
+                T0);
         execution.start(T0);
         return execution;
     }
@@ -89,8 +99,16 @@ class WorkflowExecutionTest {
 
     @Test
     void independentBranchesAreDispatchedTogetherAndJoinWaitsForBoth() {
-        start(graph().log("a").log("b").log("join")
-                .edge("trigger", "a").edge("trigger", "b").edge("a", "join").edge("b", "join").build(), "{}");
+        start(
+                graph().log("a")
+                        .log("b")
+                        .log("join")
+                        .edge("trigger", "a")
+                        .edge("trigger", "b")
+                        .edge("a", "join")
+                        .edge("b", "join")
+                        .build(),
+                "{}");
         assertThat(dispatched()).extracting(NodeTask::nodeId).containsExactlyInAnyOrder("a", "b");
 
         complete("a", "{}");
@@ -103,14 +121,23 @@ class WorkflowExecutionTest {
 
     @Test
     void conditionSelectsBranchSkipsTheOtherAndJoinStillRuns() {
-        start(graph()
-                .node("check", "CONDITION", "{\"conditions\":[{\"left\":1,\"operator\":\"EQUALS\",\"right\":1}]}")
-                .log("yes").log("no").log("noFollowUp").log("join")
-                .edge("trigger", "check")
-                .edge("check", "yes", "true").edge("check", "no", "false")
-                .edge("no", "noFollowUp")
-                .edge("yes", "join").edge("noFollowUp", "join")
-                .build(), "{}");
+        start(
+                graph().node(
+                                "check",
+                                "CONDITION",
+                                "{\"conditions\":[{\"left\":1,\"operator\":\"EQUALS\",\"right\":1}]}")
+                        .log("yes")
+                        .log("no")
+                        .log("noFollowUp")
+                        .log("join")
+                        .edge("trigger", "check")
+                        .edge("check", "yes", "true")
+                        .edge("check", "no", "false")
+                        .edge("no", "noFollowUp")
+                        .edge("yes", "join")
+                        .edge("noFollowUp", "join")
+                        .build(),
+                "{}");
         dispatched();
         complete("check", "{\"result\":true}", "true");
 
@@ -127,11 +154,13 @@ class WorkflowExecutionTest {
 
     @Test
     void nodeWhoseOnlyInputsAreSkippedIsSkippedAndExecutionCompletes() {
-        start(graph()
-                .node("check", "CONDITION", "{\"conditions\":[{\"left\":1,\"operator\":\"EXISTS\"}]}")
-                .log("onlyFalse")
-                .edge("trigger", "check").edge("check", "onlyFalse", "false")
-                .build(), "{}");
+        start(
+                graph().node("check", "CONDITION", "{\"conditions\":[{\"left\":1,\"operator\":\"EXISTS\"}]}")
+                        .log("onlyFalse")
+                        .edge("trigger", "check")
+                        .edge("check", "onlyFalse", "false")
+                        .build(),
+                "{}");
         complete("check", "{\"result\":true}", "true");
         assertThat(status("onlyFalse")).isEqualTo(NodeStatus.SKIPPED);
         assertThat(execution.status()).isEqualTo(ExecutionStatus.COMPLETED);
@@ -139,9 +168,13 @@ class WorkflowExecutionTest {
 
     @Test
     void conditionWithoutValidBranchFails() {
-        start(graph()
-                .node("check", "CONDITION", "{\"conditions\":[{\"left\":1,\"operator\":\"EXISTS\"}]}")
-                .log("x").edge("trigger", "check").edge("check", "x", "true").build(), "{}");
+        start(
+                graph().node("check", "CONDITION", "{\"conditions\":[{\"left\":1,\"operator\":\"EXISTS\"}]}")
+                        .log("x")
+                        .edge("trigger", "check")
+                        .edge("check", "x", "true")
+                        .build(),
+                "{}");
         execution.onNodeCompleted("check", attempt("check"), json("{}"), null, "w1", T0);
         assertThat(status("check")).isEqualTo(NodeStatus.FAILED);
         assertThat(execution.status()).isEqualTo(ExecutionStatus.FAILED);
@@ -149,21 +182,27 @@ class WorkflowExecutionTest {
 
     @Test
     void templatesAreResolvedFromTriggerAndUpstreamOutputsAndSecretsAreMaskedInStoredInput() {
-        start(graph()
-                .node("http", "HTTP_REQUEST", """
+        start(
+                graph().node(
+                                "http",
+                                "HTTP_REQUEST",
+                                """
                         {"method":"POST","url":"https://api.example.com/orders/{{ trigger.orderId }}",
                          "headers":{"Authorization":"Bearer {{ trigger.token }}"},
                          "body":{"amount":"{{ trigger.amount }}","items":"{{ trigger.items }}"}}""")
-                .log("after")
-                .node("log2", "LOG", "{\"message\":\"status={{ nodes.http.output.status }}\"}")
-                .edge("trigger", "http").edge("http", "log2")
-                .build(), "{\"orderId\":\"o-1\",\"amount\":42.5,\"items\":[1,2],\"token\":\"s3cr3t\"}");
+                        .log("after")
+                        .node("log2", "LOG", "{\"message\":\"status={{ nodes.http.output.status }}\"}")
+                        .edge("trigger", "http")
+                        .edge("http", "log2")
+                        .build(),
+                "{\"orderId\":\"o-1\",\"amount\":42.5,\"items\":[1,2],\"token\":\"s3cr3t\"}");
         NodeTask task = dispatched().get(0);
         assertThat(task.config().get("url").asText()).isEqualTo("https://api.example.com/orders/o-1");
         assertThat(task.config().at("/body/amount").isNumber()).isTrue();
         assertThat(task.config().at("/body/items").isArray()).isTrue();
         assertThat(task.config().at("/headers/Authorization").asText()).isEqualTo("Bearer s3cr3t");
-        assertThat(execution.node("http").input().at("/headers/Authorization").asText()).doesNotContain("s3cr3t");
+        assertThat(execution.node("http").input().at("/headers/Authorization").asText())
+                .doesNotContain("s3cr3t");
 
         complete("http", "{\"status\":201}");
         assertThat(dispatched().get(0).config().get("message").asText()).isEqualTo("status=201");
@@ -197,8 +236,16 @@ class WorkflowExecutionTest {
 
         @Test
         void exhaustedRetriesFailNodeAndExecutionAndCancelTheRest() {
-            start(graph().log("a").log("b").log("c").retry("a", 2, 0)
-                    .edge("trigger", "a").edge("trigger", "b").edge("a", "c").build(), "{}");
+            start(
+                    graph().log("a")
+                            .log("b")
+                            .log("c")
+                            .retry("a", 2, 0)
+                            .edge("trigger", "a")
+                            .edge("trigger", "b")
+                            .edge("a", "c")
+                            .build(),
+                    "{}");
             dispatched();
             execution.onNodeFailed("a", attempt("a"), RETRYABLE, "w1", T0);
             assertThat(status("a")).isEqualTo(NodeStatus.QUEUED); // zero back-off: re-dispatched immediately
@@ -231,9 +278,11 @@ class WorkflowExecutionTest {
             execution.onNodeFailed("a", first, RETRYABLE, "w1", T0);
             UUID second = attempt("a");
 
-            assertThat(execution.onNodeCompleted("a", first, json("{}"), null, "w1", T0)).isEqualTo(ResultOutcome.STALE);
+            assertThat(execution.onNodeCompleted("a", first, json("{}"), null, "w1", T0))
+                    .isEqualTo(ResultOutcome.STALE);
             assertThat(status("a")).isEqualTo(NodeStatus.QUEUED);
-            assertThat(execution.onNodeCompleted("a", second, json("{}"), null, "w1", T0)).isEqualTo(ResultOutcome.APPLIED);
+            assertThat(execution.onNodeCompleted("a", second, json("{}"), null, "w1", T0))
+                    .isEqualTo(ResultOutcome.APPLIED);
         }
 
         @Test
@@ -241,7 +290,8 @@ class WorkflowExecutionTest {
             start(graph().log("a").edge("trigger", "a").build(), "{}");
             UUID a = attempt("a");
             execution.onNodeCompleted("a", a, json("{\"n\":1}"), null, "w1", T0);
-            assertThat(execution.onNodeCompleted("a", a, json("{\"n\":2}"), null, "w1", T0)).isEqualTo(ResultOutcome.STALE);
+            assertThat(execution.onNodeCompleted("a", a, json("{\"n\":2}"), null, "w1", T0))
+                    .isEqualTo(ResultOutcome.STALE);
             assertThat(execution.node("a").output().get("n").asInt()).isEqualTo(1);
         }
 
@@ -265,7 +315,13 @@ class WorkflowExecutionTest {
 
         @Test
         void expiredLeaseStartsANewAttempt() {
-            start(graph().log("a").timeout("a", 5).retry("a", 2, 0).edge("trigger", "a").build(), "{}");
+            start(
+                    graph().log("a")
+                            .timeout("a", 5)
+                            .retry("a", 2, 0)
+                            .edge("trigger", "a")
+                            .build(),
+                    "{}");
             UUID first = attempt("a");
             assertThat(execution.node("a").leaseExpiresAt()).isEqualTo(T0.plusSeconds(15)); // timeout + grace
 
@@ -286,7 +342,13 @@ class WorkflowExecutionTest {
 
         @Test
         void leaseExpiryWithoutAttemptsLeftTimesOutTheNode() {
-            start(graph().log("a").timeout("a", 1).retry("a", 1, 0).edge("trigger", "a").build(), "{}");
+            start(
+                    graph().log("a")
+                            .timeout("a", 1)
+                            .retry("a", 1, 0)
+                            .edge("trigger", "a")
+                            .build(),
+                    "{}");
             execution.advance(T0.plusSeconds(11));
             assertThat(status("a")).isEqualTo(NodeStatus.TIMED_OUT);
             assertThat(execution.status()).isEqualTo(ExecutionStatus.FAILED);
@@ -295,7 +357,15 @@ class WorkflowExecutionTest {
 
     @Test
     void executionDeadlineTimesOutActiveNodes() {
-        start(graph().log("a").log("b").timeout("a", 300).edge("trigger", "a").edge("a", "b").executionTimeout(60).build(), "{}");
+        start(
+                graph().log("a")
+                        .log("b")
+                        .timeout("a", 300)
+                        .edge("trigger", "a")
+                        .edge("a", "b")
+                        .executionTimeout(60)
+                        .build(),
+                "{}");
         execution.advance(T0.plusSeconds(60));
         assertThat(execution.status()).isEqualTo(ExecutionStatus.TIMED_OUT);
         assertThat(status("a")).isEqualTo(NodeStatus.TIMED_OUT);
@@ -309,15 +379,27 @@ class WorkflowExecutionTest {
         execution.cancel("alice", T0);
         assertThat(execution.status()).isEqualTo(ExecutionStatus.CANCELLED);
         assertThat(status("a")).isEqualTo(NodeStatus.CANCELLED);
-        assertThat(execution.onNodeCompleted("a", a, json("{}"), null, "w1", T0)).isEqualTo(ResultOutcome.STALE);
+        assertThat(execution.onNodeCompleted("a", a, json("{}"), null, "w1", T0))
+                .isEqualTo(ResultOutcome.STALE);
         assertThat(status("b")).isEqualTo(NodeStatus.CANCELLED);
         assertThatThrownBy(() -> execution.cancel("alice", T0)).isInstanceOf(ExecutionStateException.class);
     }
 
     @Test
     void pendingExecutionCanBeCancelled() {
-        execution = WorkflowExecution.create(UUID.randomUUID(), UUID.randomUUID(), 1, "t",
-                graph().log("a").edge("trigger", "a").build(), TriggerType.MANUAL, "u", json("{}"), null, null, SETTINGS, T0);
+        execution = WorkflowExecution.create(
+                UUID.randomUUID(),
+                UUID.randomUUID(),
+                1,
+                "t",
+                graph().log("a").edge("trigger", "a").build(),
+                TriggerType.MANUAL,
+                "u",
+                json("{}"),
+                null,
+                null,
+                SETTINGS,
+                T0);
         execution.cancel("u", T0);
         assertThat(execution.status()).isEqualTo(ExecutionStatus.CANCELLED);
         assertThat(status("trigger")).isEqualTo(NodeStatus.CANCELLED);
@@ -325,8 +407,13 @@ class WorkflowExecutionTest {
 
     @Test
     void delayNodeIsADurableTimerHandledByTheEngine() {
-        start(graph().node("wait", "DELAY", "{\"durationSeconds\":30}").log("after")
-                .edge("trigger", "wait").edge("wait", "after").build(), "{}");
+        start(
+                graph().node("wait", "DELAY", "{\"durationSeconds\":30}")
+                        .log("after")
+                        .edge("trigger", "wait")
+                        .edge("wait", "after")
+                        .build(),
+                "{}");
         assertThat(dispatched()).isEmpty();
         assertThat(status("wait")).isEqualTo(NodeStatus.RUNNING);
         assertThat(execution.node("wait").resumeAt()).isEqualTo(T0.plusSeconds(30));

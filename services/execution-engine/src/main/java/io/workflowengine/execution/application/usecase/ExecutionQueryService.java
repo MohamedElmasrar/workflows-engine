@@ -40,7 +40,8 @@ public class ExecutionQueryService {
 
     public Detail get(Actor actor, UUID executionId) {
         WorkflowExecution execution = visible(actor, executionId);
-        PublishedVersion version = catalog.version(execution.workflowId(), execution.workflowVersion()).orElseThrow();
+        PublishedVersion version = catalog.version(execution.workflowId(), execution.workflowVersion())
+                .orElseThrow();
         return new Detail(execution, version, execution.state().eventSequence());
     }
 
@@ -59,8 +60,10 @@ public class ExecutionQueryService {
     }
 
     public boolean isTerminal(UUID executionId) {
-        return readModel.status(executionId)
-                .map(s -> io.workflowengine.execution.domain.model.ExecutionStatus.valueOf(s).isTerminal())
+        return readModel
+                .status(executionId)
+                .map(s -> io.workflowengine.execution.domain.model.ExecutionStatus.valueOf(s)
+                        .isTerminal())
                 .orElse(true);
     }
 
@@ -73,9 +76,11 @@ public class ExecutionQueryService {
     }
 
     private WorkflowExecution visible(Actor actor, UUID executionId) {
-        WorkflowExecution execution = executions.find(executionId)
+        WorkflowExecution execution = executions
+                .find(executionId)
                 .orElseThrow(() -> new ExecutionNotFoundException("Execution " + executionId));
-        if (!ExecutionAccessPolicy.canView(catalog.access(execution.workflowId()).orElse(null), actor)) {
+        if (!ExecutionAccessPolicy.canView(
+                catalog.access(execution.workflowId()).orElse(null), actor)) {
             throw new ExecutionNotFoundException("Execution " + executionId);
         }
         return execution;

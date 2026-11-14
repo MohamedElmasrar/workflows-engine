@@ -16,15 +16,19 @@ class WebhookSignatureTest {
     @Test
     void validSignatureWithinWindowIsAccepted() {
         String sig = WebhookSignature.sign("s3cret", NOW.getEpochSecond(), BODY);
-        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, BODY, NOW.plusSeconds(60))).isEqualTo(Verdict.VALID);
+        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, BODY, NOW.plusSeconds(60)))
+                .isEqualTo(Verdict.VALID);
     }
 
     @Test
     void tamperedBodyWrongSecretOldTimestampAndMissingHeadersAreRejected() {
         String sig = WebhookSignature.sign("s3cret", NOW.getEpochSecond(), BODY);
-        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, "{\"a\":2}".getBytes(), NOW)).isEqualTo(Verdict.MISMATCH);
-        assertThat(WebhookSignature.verify("other", "1700000000", sig, BODY, NOW)).isEqualTo(Verdict.MISMATCH);
-        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, BODY, NOW.plusSeconds(301))).isEqualTo(Verdict.STALE_TIMESTAMP);
+        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, "{\"a\":2}".getBytes(), NOW))
+                .isEqualTo(Verdict.MISMATCH);
+        assertThat(WebhookSignature.verify("other", "1700000000", sig, BODY, NOW))
+                .isEqualTo(Verdict.MISMATCH);
+        assertThat(WebhookSignature.verify("s3cret", "1700000000", sig, BODY, NOW.plusSeconds(301)))
+                .isEqualTo(Verdict.STALE_TIMESTAMP);
         assertThat(WebhookSignature.verify("s3cret", null, sig, BODY, NOW)).isEqualTo(Verdict.MISSING);
     }
 }

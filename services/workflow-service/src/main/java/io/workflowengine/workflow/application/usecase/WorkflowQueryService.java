@@ -64,7 +64,8 @@ public class WorkflowQueryService {
     /** Validates the stored draft, or a candidate definition sent by the editor before saving. */
     public ValidationResult validate(Actor actor, UUID id, JsonNode candidate) {
         Workflow workflow = get(actor, id);
-        return validation.validate(candidate != null ? candidate : workflow.draft().document());
+        return validation.validate(
+                candidate != null ? candidate : workflow.draft().document());
     }
 
     public Stats stats(Actor actor) {

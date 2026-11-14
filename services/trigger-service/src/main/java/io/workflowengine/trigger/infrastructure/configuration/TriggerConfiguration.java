@@ -36,7 +36,8 @@ public class TriggerConfiguration {
     /** 5-field cron evaluated with Spring's CronExpression (a seconds field of 0 is prefixed). */
     @Bean
     SchedulePolicy schedulePolicy() {
-        return new SchedulePolicy((cron, after) -> CronExpression.parse("0 " + cron.strip()).next(after));
+        return new SchedulePolicy(
+                (cron, after) -> CronExpression.parse("0 " + cron.strip()).next(after));
     }
 
     @Bean
@@ -51,28 +52,44 @@ public class TriggerConfiguration {
 
     @Bean
     TriggerRegistrationService triggerRegistrationService(
-            TriggerRepository triggers, AccessRepository access, DeliveryRepository deliveries, SecretProtector secrets,
-            MessageDeduplicator dedup, SchedulePolicy policy, Clock clock) {
+            TriggerRepository triggers,
+            AccessRepository access,
+            DeliveryRepository deliveries,
+            SecretProtector secrets,
+            MessageDeduplicator dedup,
+            SchedulePolicy policy,
+            Clock clock) {
         return new TriggerRegistrationService(triggers, access, deliveries, secrets, dedup, policy, clock);
     }
 
     @Bean
     WebhookService webhookService(
-            TriggerRepository triggers, DeliveryRepository deliveries, SecretProtector secrets,
-            ExecutionRequestPublisher publisher, ObjectMapper objectMapper, Clock clock) {
+            TriggerRepository triggers,
+            DeliveryRepository deliveries,
+            SecretProtector secrets,
+            ExecutionRequestPublisher publisher,
+            ObjectMapper objectMapper,
+            Clock clock) {
         return new WebhookService(triggers, deliveries, secrets, publisher, objectMapper, clock);
     }
 
     @Bean
     ScheduleService scheduleService(
-            TriggerRepository triggers, DeliveryRepository deliveries, ExecutionRequestPublisher publisher,
-            SchedulePolicy policy, ObjectMapper objectMapper, Clock clock) {
+            TriggerRepository triggers,
+            DeliveryRepository deliveries,
+            ExecutionRequestPublisher publisher,
+            SchedulePolicy policy,
+            ObjectMapper objectMapper,
+            Clock clock) {
         return new ScheduleService(triggers, deliveries, publisher, policy, objectMapper, clock);
     }
 
     @Bean
     TriggerQueryService triggerQueryService(
-            TriggerRepository triggers, DeliveryRepository deliveries, SecretProtector secrets, Authorization authorization,
+            TriggerRepository triggers,
+            DeliveryRepository deliveries,
+            SecretProtector secrets,
+            Authorization authorization,
             @Value("${trigger.public-base-url:http://localhost:8080}") String publicBaseUrl) {
         return new TriggerQueryService(triggers, deliveries, secrets, authorization, publicBaseUrl);
     }
@@ -88,6 +105,9 @@ public class TriggerConfiguration {
     }
 
     private static NewTopic topic(String name, MessagingProperties p) {
-        return TopicBuilder.name(name).partitions(p.getPartitions()).replicas(p.getReplicationFactor()).build();
+        return TopicBuilder.name(name)
+                .partitions(p.getPartitions())
+                .replicas(p.getReplicationFactor())
+                .build();
     }
 }

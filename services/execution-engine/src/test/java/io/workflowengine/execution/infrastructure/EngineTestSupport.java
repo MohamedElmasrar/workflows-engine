@@ -38,8 +38,14 @@ import org.springframework.test.context.TestPropertySource;
  */
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
-@TestPropertySource(properties = {"engine.lease-grace=2s", "engine.sweeper.interval=200ms", "platform.outbox.poll-interval=50ms",
-        "platform.messaging.retry-max-elapsed=5s", "platform.messaging.retry-initial-interval=200ms"})
+@TestPropertySource(
+        properties = {
+            "engine.lease-grace=2s",
+            "engine.sweeper.interval=200ms",
+            "platform.outbox.poll-interval=50ms",
+            "platform.messaging.retry-max-elapsed=5s",
+            "platform.messaging.retry-initial-interval=200ms"
+        })
 public abstract class EngineTestSupport {
 
     @Autowired
@@ -66,11 +72,16 @@ public abstract class EngineTestSupport {
         running = true;
         collector = Thread.ofPlatform().start(() -> {
             try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
-                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",", kafkaConnection.getBootstrapServers()),
-                    ConsumerConfig.GROUP_ID_CONFIG, "test-worker-" + UUID.randomUUID(),
-                    ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest",
-                    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
-                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class))) {
+                    ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                    String.join(",", kafkaConnection.getBootstrapServers()),
+                    ConsumerConfig.GROUP_ID_CONFIG,
+                    "test-worker-" + UUID.randomUUID(),
+                    ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                    "latest",
+                    ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                    StringDeserializer.class,
+                    ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                    StringDeserializer.class))) {
                 consumer.subscribe(List.of(Topics.NODE_TASKS));
                 while (running) {
                     for (ConsumerRecord<String, String> r : consumer.poll(Duration.ofMillis(200))) {
@@ -91,18 +102,33 @@ public abstract class EngineTestSupport {
 
     protected UUID publishWorkflow(String ownerId, JsonNode definition) {
         UUID workflowId = UUID.randomUUID();
-        send(Topics.WORKFLOW_EVENTS, EventTypes.WORKFLOW_ACCESS_UPDATED, workflowId.toString(),
-                new WorkflowAccessUpdated(workflowId, ownerId, 1,
-                        List.of(new WorkflowAccessUpdated.AccessEntry(ownerId, "OWNER")), false));
-        send(Topics.WORKFLOW_EVENTS, EventTypes.WORKFLOW_VERSION_PUBLISHED, workflowId.toString(),
+        send(
+                Topics.WORKFLOW_EVENTS,
+                EventTypes.WORKFLOW_ACCESS_UPDATED,
+                workflowId.toString(),
+                new WorkflowAccessUpdated(
+                        workflowId,
+                        ownerId,
+                        1,
+                        List.of(new WorkflowAccessUpdated.AccessEntry(ownerId, "OWNER")),
+                        false));
+        send(
+                Topics.WORKFLOW_EVENTS,
+                EventTypes.WORKFLOW_VERSION_PUBLISHED,
+                workflowId.toString(),
                 new WorkflowVersionPublished(workflowId, 1, "test", ownerId, ownerId, Instant.now(), definition));
-        await().atMost(Duration.ofSeconds(20)).until(() -> jdbc.queryForObject(
-                "select count(*) from workflow_version_snapshot where workflow_id = ?", Long.class, workflowId) == 1);
+        await().atMost(Duration.ofSeconds(20))
+                .until(() -> jdbc.queryForObject(
+                                "select count(*) from workflow_version_snapshot where workflow_id = ?",
+                                Long.class,
+                                workflowId)
+                        == 1);
         return workflowId;
     }
 
     protected EventEnvelope send(String topic, String type, String key, Object payload) {
-        EventEnvelope envelope = codec.envelope(type, key, payload, UUID.randomUUID().toString(), null);
+        EventEnvelope envelope =
+                codec.envelope(type, key, payload, UUID.randomUUID().toString(), null);
         sendRaw(topic, key, envelope);
         return envelope;
     }
@@ -112,14 +138,16 @@ public abstract class EngineTestSupport {
     }
 
     protected NodeExecutionScheduled awaitTask(UUID executionId, String nodeId, int attemptNumber) {
-        return await().atMost(Duration.ofSeconds(30)).until(
-                () -> tasks.stream()
-                        .map(e -> codec.payload(e, NodeExecutionScheduled.class))
-                        .filter(t -> t.executionId().equals(executionId) && t.nodeId().equals(nodeId)
-                                && t.attemptNumber() == attemptNumber)
-                        .findFirst()
-                        .orElse(null),
-                t -> t != null);
+        return await().atMost(Duration.ofSeconds(30))
+                .until(
+                        () -> tasks.stream()
+                                .map(e -> codec.payload(e, NodeExecutionScheduled.class))
+                                .filter(t -> t.executionId().equals(executionId)
+                                        && t.nodeId().equals(nodeId)
+                                        && t.attemptNumber() == attemptNumber)
+                                .findFirst()
+                                .orElse(null),
+                        t -> t != null);
     }
 
     protected String executionStatus(UUID executionId) {
@@ -128,7 +156,10 @@ public abstract class EngineTestSupport {
 
     protected String nodeStatus(UUID executionId, String nodeId) {
         return jdbc.queryForObject(
-                "select status from node_execution where execution_id = ? and node_id = ?", String.class, executionId, nodeId);
+                "select status from node_execution where execution_id = ? and node_id = ?",
+                String.class,
+                executionId,
+                nodeId);
     }
 
     protected void awaitExecutionStatus(UUID executionId, String status) {
@@ -138,6 +169,9 @@ public abstract class EngineTestSupport {
     protected long historyCount(UUID executionId, String nodeId, String status) {
         return jdbc.queryForObject(
                 "select count(*) from execution_event where execution_id = ? and node_id = ? and status = ? and event_type = 'NODE_STATUS_CHANGED'",
-                Long.class, executionId, nodeId, status);
+                Long.class,
+                executionId,
+                nodeId,
+                status);
     }
 }

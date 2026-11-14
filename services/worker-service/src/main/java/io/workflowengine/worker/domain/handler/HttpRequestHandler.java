@@ -24,8 +24,10 @@ import java.util.Set;
 public class HttpRequestHandler implements NodeHandler {
 
     private static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE");
-    private static final Set<String> FORBIDDEN_HEADERS = Set.of("host", "content-length", "connection", "transfer-encoding");
-    private static final Set<String> HIDDEN_RESPONSE_HEADERS = Set.of("set-cookie", "authorization", "proxy-authenticate");
+    private static final Set<String> FORBIDDEN_HEADERS =
+            Set.of("host", "content-length", "connection", "transfer-encoding");
+    private static final Set<String> HIDDEN_RESPONSE_HEADERS =
+            Set.of("set-cookie", "authorization", "proxy-authenticate");
 
     private final HttpGateway gateway;
     private final ObjectMapper objectMapper;
@@ -62,15 +64,22 @@ public class HttpRequestHandler implements NodeHandler {
                 headers.put(h.getKey(), h.getValue().asText());
             }
         }
-        headers.keySet().stream().filter(k -> k.equalsIgnoreCase("Idempotency-Key")).findAny()
+        headers.keySet().stream()
+                .filter(k -> k.equalsIgnoreCase("Idempotency-Key"))
+                .findAny()
                 .ifPresentOrElse(k -> {}, () -> headers.put("Idempotency-Key", context.idempotencyKey()));
         byte[] body = null;
         JsonNode bodyNode = config.get("body");
         if (bodyNode != null && !bodyNode.isNull() && !method.equals("GET")) {
             body = serialize(bodyNode);
-            headers.keySet().stream().filter(k -> k.equalsIgnoreCase("Content-Type")).findAny()
-                    .ifPresentOrElse(k -> {}, () -> headers.put("Content-Type",
-                            bodyNode.isTextual() ? "text/plain; charset=utf-8" : "application/json"));
+            headers.keySet().stream()
+                    .filter(k -> k.equalsIgnoreCase("Content-Type"))
+                    .findAny()
+                    .ifPresentOrElse(
+                            k -> {},
+                            () -> headers.put(
+                                    "Content-Type",
+                                    bodyNode.isTextual() ? "text/plain; charset=utf-8" : "application/json"));
         }
 
         HttpGateway.HttpResponseData response =
@@ -99,7 +108,8 @@ public class HttpRequestHandler implements NodeHandler {
         if (response.body() == null || response.body().length == 0) {
             return JsonNodeFactory.instance.nullNode();
         }
-        String contentType = response.contentType() == null ? "" : response.contentType().toLowerCase();
+        String contentType =
+                response.contentType() == null ? "" : response.contentType().toLowerCase();
         String text = new String(response.body(), StandardCharsets.UTF_8);
         if (contentType.contains("json")) {
             try {
@@ -128,8 +138,9 @@ public class HttpRequestHandler implements NodeHandler {
         }
         StringBuilder sb = new StringBuilder(url).append(url.contains("?") ? '&' : '?');
         List<String> parts = new java.util.ArrayList<>();
-        query.fields().forEachRemaining(e -> parts.add(URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8) + "="
-                + URLEncoder.encode(e.getValue().asText(), StandardCharsets.UTF_8)));
+        query.fields()
+                .forEachRemaining(e -> parts.add(URLEncoder.encode(e.getKey(), StandardCharsets.UTF_8) + "="
+                        + URLEncoder.encode(e.getValue().asText(), StandardCharsets.UTF_8)));
         return sb.append(String.join("&", parts)).toString();
     }
 

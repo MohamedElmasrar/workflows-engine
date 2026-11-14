@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "nodes": [
+    { "id": "webhook", "type": "WEBHOOK_TRIGGER", "name": "Order received", "position": { "x": 0, "y": 0 },
+      "config": { "requireSignature": true, "requiredFields": ["orderId", "amount", "customerEmail"] } },
+    { "id": "prepare", "type": "TRANSFORM", "name": "Prepare order", "position": { "x": 260, "y": 0 },
+      "config": { "set": { "orderId": "{{ trigger.body.orderId }}", "amount": "{{ trigger.body.amount }}",
+                           "email": "{{ trigger.body.customerEmail }}" } } },
+    { "id": "score", "type": "HTTP_REQUEST", "name": "Fraud score", "position": { "x": 520, "y": 0 },
+      "timeoutSeconds": 10, "retryPolicy": { "maxAttempts": 3, "initialIntervalMs": 1000, "multiplier": 2, "maxIntervalMs": 10000 },
+      "config": { "method": "POST", "url": "http://mock-api:8080/fraud-score",
+                  "headers": { "Content-Type": "application/json" },
+                  "body": { "orderId": "{{ nodes.prepare.output.orderId }}", "amount": "{{ nodes.prepare.output.amount }}" } } },
+    { "id": "risky", "type": "CONDITION", "name": "High risk?", "position": { "x": 780, "y": 0 },
+      "config": { "combinator": "AND", "conditions": [
+        { "left": "{{ nodes.score.output.body.score }}", "operator": "GREATER_THAN", "right": 70 } ] } },
+    { "id": "alert", "type": "NOTIFICATION", "name": "Alert fraud team", "position": { "x": 1040, "y": -100 },
+      "config": { "channel": "EMAIL", "recipient": "fraud-team@example.com", "subject": "High-risk order {{ nodes.prepare.output.orderId }}",
+                  "message": "Order {{ nodes.prepare.output.orderId }} scored {{ nodes.score.output.body.score }}." } },
+    { "id": "confirm", "type": "NOTIFICATION", "name": "Confirm to customer", "position": { "x": 1040, "y": 100 },
+      "config": { "channel": "EMAIL", "recipient": "{{ nodes.prepare.output.email }}", "subject": "Order confirmed",
+                  "message": "Your order {{ nodes.prepare.output.orderId }} is confirmed." } }
+  ],
+  "edges": [
+    { "id": "e1", "source": "webhook", "target": "prepare" },
+    { "id": "e2", "source": "prepare", "target": "score" },
+    { "id": "e3", "source": "score", "target": "risky" },
+    { "id": "e4", "source": "risky", "target": "alert", "sourceHandle": "true" },
+    { "id": "e5", "source": "risky", "target": "confirm", "sourceHandle": "false" }
+  ],
+  "settings": { "executionTimeoutSeconds": 600, "maxConcurrentExecutions": 10 }
+}

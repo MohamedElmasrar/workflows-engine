@@ -10,13 +10,14 @@ import org.springframework.scheduling.support.CronExpression;
 /** Pins the documented schedule semantics (time zones, DST, missed runs) to the actual cron library behaviour. */
 class SchedulePolicyTest {
 
-    private final SchedulePolicy policy =
-            new SchedulePolicy((cron, after) -> CronExpression.parse("0 " + cron).next(after));
+    private final SchedulePolicy policy = new SchedulePolicy(
+            (cron, after) -> CronExpression.parse("0 " + cron).next(after));
 
     @Test
     void evaluatesInTheConfiguredTimeZone() {
         // 09:00 in New York (EST, UTC-5) on a weekday
-        Instant next = policy.nextFireAfter("0 9 * * MON-FRI", "America/New_York", Instant.parse("2025-01-06T12:00:00Z"));
+        Instant next =
+                policy.nextFireAfter("0 9 * * MON-FRI", "America/New_York", Instant.parse("2025-01-06T12:00:00Z"));
         assertThat(next).isEqualTo(Instant.parse("2025-01-06T14:00:00Z"));
     }
 

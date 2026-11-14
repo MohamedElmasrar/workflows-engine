@@ -94,8 +94,8 @@ public class WorkflowCommandService {
     public Workflow grant(Actor actor, GrantPermission command) {
         Workflow workflow = load(command.workflowId());
         String userId = users.findIdByUsername(command.username())
-                .orElseThrow(() -> new WorkflowStateException(
-                        "Unknown user '" + command.username() + "'. Users must sign in once before they can be added."));
+                .orElseThrow(() -> new WorkflowStateException("Unknown user '" + command.username()
+                        + "'. Users must sign in once before they can be added."));
         workflow.grant(actor, userId, command.role(), clock.instant());
         return persist(workflow);
     }
@@ -122,7 +122,8 @@ public class WorkflowCommandService {
             throw new IllegalArgumentException("definition is required");
         }
         ValidationResult structural = validation.validate(document);
-        boolean schemaErrors = structural.errors().stream().anyMatch(e -> e.code().equals("SCHEMA_VIOLATION"));
+        boolean schemaErrors =
+                structural.errors().stream().anyMatch(e -> e.code().equals("SCHEMA_VIOLATION"));
         if (schemaErrors) {
             throw new InvalidWorkflowException(structural);
         }

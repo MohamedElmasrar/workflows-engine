@@ -29,7 +29,8 @@ public final class SensitiveDataMasker {
             Iterator<Map.Entry<String, JsonNode>> fields = value.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> field = fields.next();
-                if (SENSITIVE.matcher(field.getKey()).matches() && field.getValue().isValueNode()
+                if (SENSITIVE.matcher(field.getKey()).matches()
+                        && field.getValue().isValueNode()
                         && !field.getValue().isNull()) {
                     copy.put(field.getKey(), MASK);
                 } else {

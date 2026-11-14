@@ -25,12 +25,14 @@ public class TriggerExceptionAdvice {
         log.info("Webhook rejected: {} ({})", e.reason(), e.getMessage());
         HttpStatus status = HttpStatus.valueOf(e.reason().status);
         // do not tell unauthenticated callers whether a token exists or why the signature failed
-        String detail = switch (e.reason()) {
-            case NOT_FOUND -> "Unknown webhook";
-            case INVALID_SIGNATURE -> "Invalid or missing signature";
-            default -> e.getMessage();
-        };
-        return problem(status, "webhook-" + e.reason().name().toLowerCase().replace('_', '-'), "Webhook rejected", detail);
+        String detail =
+                switch (e.reason()) {
+                    case NOT_FOUND -> "Unknown webhook";
+                    case INVALID_SIGNATURE -> "Invalid or missing signature";
+                    default -> e.getMessage();
+                };
+        return problem(
+                status, "webhook-" + e.reason().name().toLowerCase().replace('_', '-'), "Webhook rejected", detail);
     }
 
     @ExceptionHandler(TriggerNotFoundException.class)

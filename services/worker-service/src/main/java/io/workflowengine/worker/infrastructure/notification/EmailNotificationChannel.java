@@ -55,7 +55,11 @@ public class EmailNotificationChannel implements NotificationChannel {
         } catch (CallNotPermittedException e) {
             throw new NodeExecutionException("CIRCUIT_OPEN", "E-mail channel temporarily unavailable", true);
         } catch (MailException | IllegalStateException e) {
-            throw new NodeExecutionException("NOTIFICATION_FAILED", "E-mail delivery failed: " + e.getClass().getSimpleName(), true, e);
+            throw new NodeExecutionException(
+                    "NOTIFICATION_FAILED",
+                    "E-mail delivery failed: " + e.getClass().getSimpleName(),
+                    true,
+                    e);
         }
     }
 }

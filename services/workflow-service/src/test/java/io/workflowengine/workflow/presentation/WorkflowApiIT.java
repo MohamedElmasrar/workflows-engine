@@ -62,7 +62,11 @@ class WorkflowApiIT {
     }
 
     JsonNode call(MockHttpServletRequestBuilder request, int expectedStatus) throws Exception {
-        String body = mvc.perform(request).andExpect(status().is(expectedStatus)).andReturn().getResponse().getContentAsString();
+        String body = mvc.perform(request)
+                .andExpect(status().is(expectedStatus))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
         return body.isEmpty() ? null : json.readTree(body);
     }
 
@@ -106,7 +110,11 @@ class WorkflowApiIT {
         // bob is unknown to alice's workflow → 404 (existence not revealed)
         call(get("/api/v1/workflows/" + id).with(user("bob")), 404);
         call(get("/api/v1/me").with(user("bob")), 200); // bob signs in once
-        call(withJson(put("/api/v1/workflows/" + id + "/permissions/bob").with(user("alice")), Map.of("role", "VIEWER")), 200);
+        call(
+                withJson(
+                        put("/api/v1/workflows/" + id + "/permissions/bob").with(user("alice")),
+                        Map.of("role", "VIEWER")),
+                200);
         JsonNode asBob = call(get("/api/v1/workflows/" + id).with(user("bob")), 200);
         assertThat(asBob.get("role").asText()).isEqualTo("VIEWER");
         call(post("/api/v1/workflows/" + id + "/publish").with(user("bob")), 403);
@@ -115,22 +123,30 @@ class WorkflowApiIT {
         assertThat(bobList.get("totalItems").asInt()).isEqualTo(1);
 
         List<EventEnvelope> events = consume(id, 3);
-        assertThat(events).extracting(EventEnvelope::eventType)
+        assertThat(events)
+                .extracting(EventEnvelope::eventType)
                 .containsSubsequence("WorkflowAccessUpdated", "WorkflowVersionPublished", "WorkflowAccessUpdated");
         EventEnvelope published = events.stream()
-                .filter(e -> e.eventType().equals("WorkflowVersionPublished")).findFirst().orElseThrow();
+                .filter(e -> e.eventType().equals("WorkflowVersionPublished"))
+                .findFirst()
+                .orElseThrow();
         assertThat(published.payload().at("/definition/nodes/1/id").asText()).isEqualTo("hello");
     }
 
     @Test
     void publishingAnInvalidWorkflowReturns422WithErrors() throws Exception {
         String id = call(withJson(post("/api/v1/workflows").with(user("carol")), Map.of("name", "Broken")), 201)
-                .get("id").asText();
+                .get("id")
+                .asText();
         JsonNode definition = DefinitionFixtures.definition()
                 .manualTrigger("start")
                 .log("orphan", "x")
                 .json();
-        call(withJson(put("/api/v1/workflows/" + id).with(user("carol")), Map.of("name", "Broken", "definition", definition, "revision", 1)), 200);
+        call(
+                withJson(
+                        put("/api/v1/workflows/" + id).with(user("carol")),
+                        Map.of("name", "Broken", "definition", definition, "revision", 1)),
+                200);
         mvc.perform(post("/api/v1/workflows/" + id + "/publish").with(user("carol")))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.errors[0].code").value("UNREACHABLE_NODE"))
@@ -140,10 +156,14 @@ class WorkflowApiIT {
     @Test
     void schemaViolationsAreRejectedOnSave() throws Exception {
         String id = call(withJson(post("/api/v1/workflows").with(user("dave")), Map.of("name", "Bad")), 201)
-                .get("id").asText();
-        ObjectNode definition = (ObjectNode) DefinitionFixtures.definition().manualTrigger("start").json();
+                .get("id")
+                .asText();
+        ObjectNode definition = (ObjectNode)
+                DefinitionFixtures.definition().manualTrigger("start").json();
         definition.put("script", "evil()");
-        mvc.perform(withJson(put("/api/v1/workflows/" + id).with(user("dave")), Map.of("name", "Bad", "definition", definition, "revision", 1)))
+        mvc.perform(withJson(
+                        put("/api/v1/workflows/" + id).with(user("dave")),
+                        Map.of("name", "Bad", "definition", definition, "revision", 1)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.errors[0].code").value("SCHEMA_VIOLATION"));
     }
@@ -151,19 +171,27 @@ class WorkflowApiIT {
     @Test
     void archivedWorkflowsDisappearFromDefaultList() throws Exception {
         String id = call(withJson(post("/api/v1/workflows").with(user("erin")), Map.of("name", "Temp")), 201)
-                .get("id").asText();
+                .get("id")
+                .asText();
         call(delete("/api/v1/workflows/" + id).with(user("erin")), 204);
-        assertThat(call(get("/api/v1/workflows").with(user("erin")), 200).get("totalItems").asInt()).isZero();
-        assertThat(call(get("/api/v1/workflows?status=ARCHIVED").with(user("erin")), 200).get("totalItems").asInt())
+        assertThat(call(get("/api/v1/workflows").with(user("erin")), 200)
+                        .get("totalItems")
+                        .asInt())
+                .isZero();
+        assertThat(call(get("/api/v1/workflows?status=ARCHIVED").with(user("erin")), 200)
+                        .get("totalItems")
+                        .asInt())
                 .isEqualTo(1);
     }
 
     @Test
     void publishedVersionsAreImmutableInTheDatabase() throws Exception {
         String id = call(withJson(post("/api/v1/workflows").with(user("frank")), Map.of("name", "Immutable")), 201)
-                .get("id").asText();
+                .get("id")
+                .asText();
         call(post("/api/v1/workflows/" + id + "/publish").with(user("frank")), 201);
-        assertThatThrownBy(() -> jdbc.update("update workflow_version set name = 'hacked' where workflow_id = ?::uuid", id))
+        assertThatThrownBy(() ->
+                        jdbc.update("update workflow_version set name = 'hacked' where workflow_id = ?::uuid", id))
                 .hasMessageContaining("immutable");
     }
 
@@ -174,11 +202,16 @@ class WorkflowApiIT {
 
     private List<EventEnvelope> consume(String workflowId, int atLeast) throws Exception {
         Map<String, Object> props = Map.of(
-                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, String.join(",", kafkaConnection.getBootstrapServers()),
-                ConsumerConfig.GROUP_ID_CONFIG, "test-" + UUID.randomUUID(),
-                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest",
-                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class,
-                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+                ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG,
+                String.join(",", kafkaConnection.getBootstrapServers()),
+                ConsumerConfig.GROUP_ID_CONFIG,
+                "test-" + UUID.randomUUID(),
+                ConsumerConfig.AUTO_OFFSET_RESET_CONFIG,
+                "earliest",
+                ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class,
+                ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                StringDeserializer.class);
         List<EventEnvelope> result = new ArrayList<>();
         try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props)) {
             consumer.subscribe(List.of(Topics.WORKFLOW_EVENTS));

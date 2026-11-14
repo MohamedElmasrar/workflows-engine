@@ -39,7 +39,8 @@ public final class WebhookSignature {
         MISMATCH
     }
 
-    public static Verdict verify(String secret, String timestampHeader, String signatureHeader, byte[] body, Instant now) {
+    public static Verdict verify(
+            String secret, String timestampHeader, String signatureHeader, byte[] body, Instant now) {
         if (timestampHeader == null || signatureHeader == null) {
             return Verdict.MISSING;
         }

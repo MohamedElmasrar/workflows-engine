@@ -72,8 +72,12 @@ public class TaskProcessor {
         String key = task.executionId().toString();
         Optional<AttemptCache.CachedResult> cached = cache.finished(task.attemptId());
         if (cached.isPresent()) {
-            log.info("Attempt {} of node {} already finished; re-publishing cached result", task.attemptId(), task.nodeId());
-            publisher.publish(cached.get().eventType(), key, readTree(cached.get().payloadJson()));
+            log.info(
+                    "Attempt {} of node {} already finished; re-publishing cached result",
+                    task.attemptId(),
+                    task.nodeId());
+            publisher.publish(
+                    cached.get().eventType(), key, readTree(cached.get().payloadJson()));
             metrics.cachedResultReplayed(task.nodeType());
             return;
         }
@@ -92,17 +96,33 @@ public class TaskProcessor {
         if (result instanceof NodeResult.Success success) {
             eventType = EventTypes.NODE_EXECUTION_COMPLETED;
             payload = new NodeExecutionCompleted(
-                    task.executionId(), task.nodeId(), task.attemptId(), workerId, success.output(), success.branch(),
-                    durationMs, clock.instant());
+                    task.executionId(),
+                    task.nodeId(),
+                    task.attemptId(),
+                    workerId,
+                    success.output(),
+                    success.branch(),
+                    durationMs,
+                    clock.instant());
             outcome = "COMPLETED";
         } else {
             NodeResult.Failure failure = (NodeResult.Failure) result;
             eventType = EventTypes.NODE_EXECUTION_FAILED;
             payload = new NodeExecutionFailed(
-                    task.executionId(), task.nodeId(), task.attemptId(), workerId,
-                    new NodeError(failure.code(), failure.message(), failure.retryable()), durationMs, clock.instant());
+                    task.executionId(),
+                    task.nodeId(),
+                    task.attemptId(),
+                    workerId,
+                    new NodeError(failure.code(), failure.message(), failure.retryable()),
+                    durationMs,
+                    clock.instant());
             outcome = "FAILED";
-            log.info("Node {} attempt {} failed: {} ({})", task.nodeId(), task.attemptNumber(), failure.code(), failure.message());
+            log.info(
+                    "Node {} attempt {} failed: {} ({})",
+                    task.nodeId(),
+                    task.attemptNumber(),
+                    failure.code(),
+                    failure.message());
         }
         publisher.publish(eventType, key, payload);
         cache.storeFinished(task.attemptId(), new AttemptCache.CachedResult(eventType, writeJson(payload)));
@@ -122,7 +142,13 @@ public class TaskProcessor {
         }
         Duration timeout = Duration.ofMillis(task.timeoutMs());
         NodeExecutionContext context = new NodeExecutionContext(
-                task.executionId(), task.workflowId(), task.nodeId(), type, task.attemptId(), task.attemptNumber(), timeout);
+                task.executionId(),
+                task.workflowId(),
+                task.nodeId(),
+                type,
+                task.attemptId(),
+                task.attemptNumber(),
+                timeout);
         Future<NodeResult> future = executor.submit(() -> handler.get().execute(context, task.config()));
         try {
             NodeResult result = future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
@@ -136,7 +162,8 @@ public class TaskProcessor {
                 return n.toFailure();
             }
             log.error("Handler for {} failed unexpectedly", type, cause);
-            return new NodeResult.Failure("HANDLER_ERROR", "Unexpected error: " + cause.getClass().getSimpleName(), true);
+            return new NodeResult.Failure(
+                    "HANDLER_ERROR", "Unexpected error: " + cause.getClass().getSimpleName(), true);
         } catch (InterruptedException e) {
             future.cancel(true);
             Thread.currentThread().interrupt();
@@ -145,9 +172,11 @@ public class TaskProcessor {
     }
 
     private NodeResult enforceOutputLimit(NodeResult result) {
-        if (result instanceof NodeResult.Success success && success.output() != null
+        if (result instanceof NodeResult.Success success
+                && success.output() != null
                 && writeJson(success.output()).getBytes(StandardCharsets.UTF_8).length > MAX_OUTPUT_BYTES) {
-            return new NodeResult.Failure("OUTPUT_TOO_LARGE", "Node output exceeds " + MAX_OUTPUT_BYTES + " bytes", false);
+            return new NodeResult.Failure(
+                    "OUTPUT_TOO_LARGE", "Node output exceeds " + MAX_OUTPUT_BYTES + " bytes", false);
         }
         return result;
     }

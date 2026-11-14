@@ -32,7 +32,8 @@ public class ConditionHandler implements NodeHandler {
         for (JsonNode condition : conditions) {
             ConditionOperator operator = operator(condition.path("operator").asText());
             boolean outcome = operator.test(condition.get("left"), condition.get("right"));
-            ObjectNode evaluation = evaluations.addObject().put("operator", operator.name()).put("result", outcome);
+            ObjectNode evaluation =
+                    evaluations.addObject().put("operator", operator.name()).put("result", outcome);
             evaluation.set("left", condition.get("left"));
             evaluation.set("right", condition.get("right"));
             result = combinator.equals("AND") ? result && outcome : result || outcome;

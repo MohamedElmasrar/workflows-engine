@@ -31,30 +31,34 @@ public class OutboxIntegrationEventPublisher implements IntegrationEventPublishe
                     List<WorkflowAccessUpdated.AccessEntry> entries = new ArrayList<>();
                     entries.add(new WorkflowAccessUpdated.AccessEntry(e.ownerId(), "OWNER"));
                     e.permissions()
-                            .forEach(p -> entries.add(new WorkflowAccessUpdated.AccessEntry(p.userId(), p.role().name())));
+                            .forEach(p -> entries.add(new WorkflowAccessUpdated.AccessEntry(
+                                    p.userId(), p.role().name())));
                     outbox.append(
                             Topics.WORKFLOW_EVENTS,
                             EventTypes.WORKFLOW_ACCESS_UPDATED,
                             key,
-                            new WorkflowAccessUpdated(e.workflowId(), e.ownerId(), e.aclRevision(), entries, e.archived()));
+                            new WorkflowAccessUpdated(
+                                    e.workflowId(), e.ownerId(), e.aclRevision(), entries, e.archived()));
                 }
-                case WorkflowDomainEvent.VersionPublished e -> outbox.append(
-                        Topics.WORKFLOW_EVENTS,
-                        EventTypes.WORKFLOW_VERSION_PUBLISHED,
-                        key,
-                        new WorkflowVersionPublished(
-                                e.workflowId(),
-                                e.version().version(),
-                                e.version().name(),
-                                e.ownerId(),
-                                e.version().publishedBy(),
-                                e.version().publishedAt(),
-                                e.version().definition().document()));
-                case WorkflowDomainEvent.Archived e -> outbox.append(
-                        Topics.WORKFLOW_EVENTS,
-                        EventTypes.WORKFLOW_ARCHIVED,
-                        key,
-                        new WorkflowArchived(e.workflowId(), e.archivedAt()));
+                case WorkflowDomainEvent.VersionPublished e ->
+                    outbox.append(
+                            Topics.WORKFLOW_EVENTS,
+                            EventTypes.WORKFLOW_VERSION_PUBLISHED,
+                            key,
+                            new WorkflowVersionPublished(
+                                    e.workflowId(),
+                                    e.version().version(),
+                                    e.version().name(),
+                                    e.ownerId(),
+                                    e.version().publishedBy(),
+                                    e.version().publishedAt(),
+                                    e.version().definition().document()));
+                case WorkflowDomainEvent.Archived e ->
+                    outbox.append(
+                            Topics.WORKFLOW_EVENTS,
+                            EventTypes.WORKFLOW_ARCHIVED,
+                            key,
+                            new WorkflowArchived(e.workflowId(), e.archivedAt()));
             }
         }
     }

@@ -48,7 +48,8 @@ public class JdbcWorkflowCatalog implements WorkflowCatalog {
 
     @Override
     public Optional<PublishedVersion> version(UUID workflowId, int version) {
-        return jdbc.query(
+        return jdbc
+                .query(
                         "select name, definition::text from workflow_version_snapshot where workflow_id = ? and version = ?",
                         (rs, i) -> new PublishedVersion(workflowId, version, rs.getString(1), parse(rs.getString(2))),
                         workflowId,
@@ -59,12 +60,14 @@ public class JdbcWorkflowCatalog implements WorkflowCatalog {
 
     @Override
     public Optional<PublishedVersion> latestVersion(UUID workflowId) {
-        return jdbc.query(
+        return jdbc
+                .query(
                         """
                         select version, name, definition::text from workflow_version_snapshot
                         where workflow_id = ? order by version desc limit 1
                         """,
-                        (rs, i) -> new PublishedVersion(workflowId, rs.getInt(1), rs.getString(2), parse(rs.getString(3))),
+                        (rs, i) ->
+                                new PublishedVersion(workflowId, rs.getInt(1), rs.getString(2), parse(rs.getString(3))),
                         workflowId)
                 .stream()
                 .findFirst();
@@ -133,7 +136,8 @@ public class JdbcWorkflowCatalog implements WorkflowCatalog {
 
     @Override
     public void markArchived(UUID workflowId) {
-        jdbc.update("update workflow_projection set archived = true, updated_at = now() where workflow_id = ?", workflowId);
+        jdbc.update(
+                "update workflow_projection set archived = true, updated_at = now() where workflow_id = ?", workflowId);
     }
 
     private JsonNode parse(String json) {

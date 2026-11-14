@@ -85,7 +85,8 @@ public final class TemplateResolver {
             current = context.execution();
             rest = path.substring("execution".length());
         } else if (path.startsWith("nodes.")) {
-            Matcher node = Pattern.compile("^nodes\\.([A-Za-z][A-Za-z0-9_-]*)\\.output").matcher(path);
+            Matcher node = Pattern.compile("^nodes\\.([A-Za-z][A-Za-z0-9_-]*)\\.output")
+                    .matcher(path);
             if (!node.find()) {
                 return MissingNode.getInstance();
             }

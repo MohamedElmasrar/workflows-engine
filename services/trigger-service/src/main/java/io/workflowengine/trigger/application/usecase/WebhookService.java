@@ -26,7 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class WebhookService {
 
     public static final int MAX_PAYLOAD_BYTES = 256 * 1024;
-    private static final Set<String> FORWARDED_HEADERS = Set.of("content-type", "user-agent", "x-request-id", "x-github-event");
+    private static final Set<String> FORWARDED_HEADERS =
+            Set.of("content-type", "user-agent", "x-request-id", "x-github-event");
 
     private final TriggerRepository triggers;
     private final DeliveryRepository deliveries;
@@ -50,14 +51,16 @@ public class WebhookService {
         this.clock = clock;
     }
 
-    public record Incoming(String token, String contentType, Map<String, String> headers, Map<String, String> query, byte[] body) {}
+    public record Incoming(
+            String token, String contentType, Map<String, String> headers, Map<String, String> query, byte[] body) {}
 
     public record Accepted(UUID deliveryId, UUID executionId, boolean duplicate) {}
 
     @Transactional
     public Accepted receive(Incoming request) {
         if (request.body().length > MAX_PAYLOAD_BYTES) {
-            throw new WebhookRejectedException(Reason.PAYLOAD_TOO_LARGE, "Payload exceeds " + MAX_PAYLOAD_BYTES + " bytes");
+            throw new WebhookRejectedException(
+                    Reason.PAYLOAD_TOO_LARGE, "Payload exceeds " + MAX_PAYLOAD_BYTES + " bytes");
         }
         WebhookEndpoint endpoint = triggers.webhookByTokenHash(secrets.hashToken(request.token()))
                 .filter(WebhookEndpoint::active)
@@ -66,13 +69,17 @@ public class WebhookService {
         String signature = header(request, "x-webhook-signature");
         if (endpoint.requireSignature()) {
             WebhookSignature.Verdict verdict = WebhookSignature.verify(
-                    secrets.decrypt(endpoint.encryptedSecret()), header(request, "x-webhook-timestamp"), signature,
-                    request.body(), now);
+                    secrets.decrypt(endpoint.encryptedSecret()),
+                    header(request, "x-webhook-timestamp"),
+                    signature,
+                    request.body(),
+                    now);
             if (verdict != WebhookSignature.Verdict.VALID) {
                 throw new WebhookRejectedException(Reason.INVALID_SIGNATURE, "Signature check failed: " + verdict);
             }
         }
-        if (request.contentType() == null || !request.contentType().toLowerCase().contains("json")) {
+        if (request.contentType() == null
+                || !request.contentType().toLowerCase().contains("json")) {
             throw new WebhookRejectedException(Reason.UNSUPPORTED_MEDIA_TYPE, "Content-Type must be application/json");
         }
         JsonNode body;
@@ -91,8 +98,14 @@ public class WebhookService {
         String dedupeKey = dedupeKey(request, endpoint, signature);
         UUID executionId = UUID.randomUUID();
         DeliveryRepository.InsertResult inserted = deliveries.insertIfAbsent(new DeliveryRepository.Delivery(
-                UUID.randomUUID(), endpoint.workflowId(), "WEBHOOK", dedupeKey, executionId, "REQUESTED",
-                request.body().length, now));
+                UUID.randomUUID(),
+                endpoint.workflowId(),
+                "WEBHOOK",
+                dedupeKey,
+                executionId,
+                "REQUESTED",
+                request.body().length,
+                now));
         if (!inserted.created()) {
             return new Accepted(inserted.delivery().id(), inserted.delivery().executionId(), true);
         }

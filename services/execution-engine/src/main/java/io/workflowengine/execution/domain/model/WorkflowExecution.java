@@ -116,11 +116,28 @@ public final class WorkflowExecution {
                 .map(n -> new NodeExecution(n.id(), n.type().name()))
                 .toList();
         State state = new State(
-                id, workflowId, workflowVersion, workflowName, ExecutionStatus.PENDING, triggerType, triggeredBy,
-                input, null, null, idempotencyKey, retryOf, now, null, null, null, 0);
+                id,
+                workflowId,
+                workflowVersion,
+                workflowName,
+                ExecutionStatus.PENDING,
+                triggerType,
+                triggeredBy,
+                input,
+                null,
+                null,
+                idempotencyKey,
+                retryOf,
+                now,
+                null,
+                null,
+                null,
+                0);
         WorkflowExecution execution = new WorkflowExecution(state, graph, nodes, settings);
-        ObjectNode details = JSON.objectNode().put("triggerType", triggerType.name()).put("workflowVersion", workflowVersion);
-        execution.history(ExecutionHistoryEntry.EXECUTION_CREATED, null, null, ExecutionStatus.PENDING.name(), details, now);
+        ObjectNode details =
+                JSON.objectNode().put("triggerType", triggerType.name()).put("workflowVersion", workflowVersion);
+        execution.history(
+                ExecutionHistoryEntry.EXECUTION_CREATED, null, null, ExecutionStatus.PENDING.name(), details, now);
         return execution;
     }
 
@@ -172,7 +189,9 @@ public final class WorkflowExecution {
         if (deadlineAt != null && !now.isBefore(deadlineAt)) {
             terminate(
                     ExecutionStatus.TIMED_OUT,
-                    new ExecutionError("EXECUTION_TIMEOUT", "Execution exceeded " + graph.executionTimeout().toSeconds() + "s"),
+                    new ExecutionError(
+                            "EXECUTION_TIMEOUT",
+                            "Execution exceeded " + graph.executionTimeout().toSeconds() + "s"),
                     now);
             return;
         }
@@ -184,9 +203,16 @@ public final class WorkflowExecution {
                 NodeFailure failure = NodeFailure.leaseExpired();
                 node.currentAttempt().ifPresent(a -> a.finish(NodeAttempt.Status.LEASE_EXPIRED, null, now, failure));
                 handleAttemptFailure(node, failure, true, now);
-            } else if (node.status() == NodeStatus.RUNNING && node.resumeAt() != null && !now.isBefore(node.resumeAt())) {
+            } else if (node.status() == NodeStatus.RUNNING
+                    && node.resumeAt() != null
+                    && !now.isBefore(node.resumeAt())) {
                 ObjectNode result = JSON.objectNode()
-                        .put("delayedSeconds", graph.node(node.nodeId()).config().path("durationSeconds").asLong())
+                        .put(
+                                "delayedSeconds",
+                                graph.node(node.nodeId())
+                                        .config()
+                                        .path("durationSeconds")
+                                        .asLong())
                         .put("resumedAt", now.toString());
                 node.complete(result, null, now);
                 recordNode(node, null, null, now);
@@ -248,7 +274,8 @@ public final class WorkflowExecution {
         return ResultOutcome.APPLIED;
     }
 
-    public ResultOutcome onNodeFailed(String nodeId, UUID attemptId, NodeFailure failure, String workerId, Instant now) {
+    public ResultOutcome onNodeFailed(
+            String nodeId, UUID attemptId, NodeFailure failure, String workerId, Instant now) {
         NodeExecution node = nodes.get(nodeId);
         if (!acceptsResultFor(node, attemptId)) {
             return stale(nodeId, attemptId, "failed", now);
@@ -270,7 +297,13 @@ public final class WorkflowExecution {
         if (node != null) {
             details.put("nodeStatus", node.status().name());
         }
-        history(ExecutionHistoryEntry.STALE_RESULT_IGNORED, node == null ? null : nodeId, attemptId, null, details, now);
+        history(
+                ExecutionHistoryEntry.STALE_RESULT_IGNORED,
+                node == null ? null : nodeId,
+                attemptId,
+                null,
+                details,
+                now);
         return ResultOutcome.STALE;
     }
 
@@ -289,14 +322,24 @@ public final class WorkflowExecution {
                     .put("nextAttemptAt", nextAttemptAt.toString())
                     .put("errorCode", failure.code())
                     .put("errorMessage", failure.message());
-            history(ExecutionHistoryEntry.NODE_RETRY_SCHEDULED, node.nodeId(), attemptId, NodeStatus.READY.name(), details, now);
+            history(
+                    ExecutionHistoryEntry.NODE_RETRY_SCHEDULED,
+                    node.nodeId(),
+                    attemptId,
+                    NodeStatus.READY.name(),
+                    details,
+                    now);
             effects.add(new ExecutionEffect.NodeAttemptFinished(node.nodeType(), NodeStatus.FAILED, duration, true));
             dispatchReady(now);
             return;
         }
         NodeStatus terminal = leaseExpired ? NodeStatus.TIMED_OUT : NodeStatus.FAILED;
         node.finish(terminal, failure, now);
-        recordNode(node, attemptId, JSON.objectNode().put("errorCode", failure.code()).put("errorMessage", failure.message()), now);
+        recordNode(
+                node,
+                attemptId,
+                JSON.objectNode().put("errorCode", failure.code()).put("errorMessage", failure.message()),
+                now);
         effects.add(new ExecutionEffect.NodeAttemptFinished(node.nodeType(), terminal, duration, false));
         terminate(
                 ExecutionStatus.FAILED,
@@ -344,7 +387,8 @@ public final class WorkflowExecution {
             return;
         }
         for (NodeExecution node : nodes.values()) {
-            if (node.status() == NodeStatus.READY && (node.availableAt() == null || !now.isBefore(node.availableAt()))) {
+            if (node.status() == NodeStatus.READY
+                    && (node.availableAt() == null || !now.isBefore(node.availableAt()))) {
                 dispatch(node, now);
             }
         }
@@ -358,7 +402,11 @@ public final class WorkflowExecution {
             node.setInput(config);
             node.markRunning(now);
             node.scheduleResume(now.plusSeconds(seconds));
-            recordNode(node, null, JSON.objectNode().put("resumeAt", now.plusSeconds(seconds).toString()), now);
+            recordNode(
+                    node,
+                    null,
+                    JSON.objectNode().put("resumeAt", now.plusSeconds(seconds).toString()),
+                    now);
             return;
         }
         UUID attemptId = UUID.randomUUID();
@@ -389,7 +437,8 @@ public final class WorkflowExecution {
     }
 
     private void checkCompletion(Instant now) {
-        if (status != ExecutionStatus.RUNNING || !nodes.values().stream().allMatch(n -> n.status().isTerminal())) {
+        if (status != ExecutionStatus.RUNNING
+                || !nodes.values().stream().allMatch(n -> n.status().isTerminal())) {
             return;
         }
         ObjectNode result = JSON.objectNode();
@@ -406,7 +455,9 @@ public final class WorkflowExecution {
                 continue;
             }
             NodeStatus nodeTarget =
-                    target == ExecutionStatus.TIMED_OUT && node.status().isActive() ? NodeStatus.TIMED_OUT : NodeStatus.CANCELLED;
+                    target == ExecutionStatus.TIMED_OUT && node.status().isActive()
+                            ? NodeStatus.TIMED_OUT
+                            : NodeStatus.CANCELLED;
             node.currentAttempt()
                     .filter(NodeAttempt::isOpen)
                     .ifPresent(a -> a.finish(NodeAttempt.Status.CANCELLED, null, now, null));
@@ -434,8 +485,13 @@ public final class WorkflowExecution {
     }
 
     private void recordNode(NodeExecution node, UUID attemptId, ObjectNode details, Instant now) {
-        history(ExecutionHistoryEntry.NODE_STATUS, node.nodeId(), attemptId, node.status().name(),
-                details == null ? JSON.objectNode() : details, now);
+        history(
+                ExecutionHistoryEntry.NODE_STATUS,
+                node.nodeId(),
+                attemptId,
+                node.status().name(),
+                details == null ? JSON.objectNode() : details,
+                now);
     }
 
     private void history(String type, String nodeId, UUID attemptId, String newStatus, JsonNode details, Instant now) {
@@ -444,7 +500,8 @@ public final class WorkflowExecution {
 
     private static long attemptDuration(NodeExecution node, Instant now) {
         return node.currentAttempt()
-                .map(a -> Duration.between(a.startedAt() != null ? a.startedAt() : a.dispatchedAt(), now).toMillis())
+                .map(a -> Duration.between(a.startedAt() != null ? a.startedAt() : a.dispatchedAt(), now)
+                        .toMillis())
                 .orElse(0L);
     }
 
@@ -464,20 +521,70 @@ public final class WorkflowExecution {
 
     public State state() {
         return new State(
-                id, workflowId, workflowVersion, workflowName, status, triggerType, triggeredBy, input, output, error,
-                idempotencyKey, retryOf, createdAt, startedAt, finishedAt, deadlineAt, eventSequence);
+                id,
+                workflowId,
+                workflowVersion,
+                workflowName,
+                status,
+                triggerType,
+                triggeredBy,
+                input,
+                output,
+                error,
+                idempotencyKey,
+                retryOf,
+                createdAt,
+                startedAt,
+                finishedAt,
+                deadlineAt,
+                eventSequence);
     }
 
-    public UUID id() { return id; }
-    public UUID workflowId() { return workflowId; }
-    public int workflowVersion() { return workflowVersion; }
-    public ExecutionStatus status() { return status; }
-    public JsonNode input() { return input; }
-    public TriggerType triggerType() { return triggerType; }
-    public ExecutionGraph graph() { return graph; }
-    public Instant createdAt() { return createdAt; }
-    public Instant startedAt() { return startedAt; }
-    public Instant finishedAt() { return finishedAt; }
-    public NodeExecution node(String nodeId) { return nodes.get(nodeId); }
-    public List<NodeExecution> nodes() { return List.copyOf(nodes.values()); }
+    public UUID id() {
+        return id;
+    }
+
+    public UUID workflowId() {
+        return workflowId;
+    }
+
+    public int workflowVersion() {
+        return workflowVersion;
+    }
+
+    public ExecutionStatus status() {
+        return status;
+    }
+
+    public JsonNode input() {
+        return input;
+    }
+
+    public TriggerType triggerType() {
+        return triggerType;
+    }
+
+    public ExecutionGraph graph() {
+        return graph;
+    }
+
+    public Instant createdAt() {
+        return createdAt;
+    }
+
+    public Instant startedAt() {
+        return startedAt;
+    }
+
+    public Instant finishedAt() {
+        return finishedAt;
+    }
+
+    public NodeExecution node(String nodeId) {
+        return nodes.get(nodeId);
+    }
+
+    public List<NodeExecution> nodes() {
+        return List.copyOf(nodes.values());
+    }
 }

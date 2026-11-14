@@ -34,7 +34,8 @@ public class ExecutionExceptionAdvice {
 
     @ExceptionHandler(VersionNotAvailableException.class)
     ProblemDetail versionMissing(VersionNotAvailableException e) {
-        ProblemDetail p = problem(HttpStatus.CONFLICT, "version-not-available", "Version not available", e.getMessage());
+        ProblemDetail p =
+                problem(HttpStatus.CONFLICT, "version-not-available", "Version not available", e.getMessage());
         p.setProperty("retryable", true);
         return p;
     }

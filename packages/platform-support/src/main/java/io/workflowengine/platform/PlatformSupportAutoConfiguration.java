@@ -38,11 +38,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @AutoConfiguration(
-        after = {
-            KafkaAutoConfiguration.class,
-            JdbcTemplateAutoConfiguration.class,
-            TransactionAutoConfiguration.class
-        },
+        after = {KafkaAutoConfiguration.class, JdbcTemplateAutoConfiguration.class, TransactionAutoConfiguration.class},
         afterName = "org.springframework.boot.actuate.autoconfigure.tracing.MicrometerTracingAutoConfiguration")
 @EnableConfigurationProperties({MessagingProperties.class, OutboxProperties.class})
 public class PlatformSupportAutoConfiguration {

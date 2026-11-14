@@ -58,7 +58,8 @@ public class OutboxPublisher {
         this.traceContext = traceContext;
         this.published = Counter.builder("outbox.events.published").register(meterRegistry);
         this.failures = Counter.builder("outbox.publish.failures").register(meterRegistry);
-        Gauge.builder("outbox.events.pending", this, OutboxPublisher::pendingCount).register(meterRegistry);
+        Gauge.builder("outbox.events.pending", this, OutboxPublisher::pendingCount)
+                .register(meterRegistry);
     }
 
     @Scheduled(fixedDelayString = "${platform.outbox.poll-interval:200ms}")
@@ -72,8 +73,8 @@ public class OutboxPublisher {
     /** Publishes up to one batch. Returns the number of rows published (0 if another instance holds the lock). */
     public int publishBatch() {
         Integer result = transactionTemplate.execute(status -> {
-            Boolean locked =
-                    jdbcTemplate.queryForObject("select pg_try_advisory_xact_lock(?)", Boolean.class, ADVISORY_LOCK_KEY);
+            Boolean locked = jdbcTemplate.queryForObject(
+                    "select pg_try_advisory_xact_lock(?)", Boolean.class, ADVISORY_LOCK_KEY);
             if (!Boolean.TRUE.equals(locked)) {
                 return 0;
             }
@@ -127,13 +128,10 @@ public class OutboxPublisher {
     private void send(Row row) {
         Map<String, String> headers = parseHeaders(row.headers());
         traceContext.runInContext(headers, "outbox publish " + row.eventType(), () -> {
-            ProducerRecord<String, String> record =
-                    new ProducerRecord<>(row.topic(), row.messageKey(), row.envelope());
+            ProducerRecord<String, String> record = new ProducerRecord<>(row.topic(), row.messageKey(), row.envelope());
             record.headers().add("x-event-type", row.eventType().getBytes(StandardCharsets.UTF_8));
             try {
-                kafkaTemplate
-                        .send(record)
-                        .get(properties.getSendTimeout().toMillis(), TimeUnit.MILLISECONDS);
+                kafkaTemplate.send(record).get(properties.getSendTimeout().toMillis(), TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 throw new IllegalStateException("Interrupted while publishing outbox event", e);
@@ -154,8 +152,8 @@ public class OutboxPublisher {
 
     private double pendingCount() {
         try {
-            Long pending =
-                    jdbcTemplate.queryForObject("select count(*) from outbox_event where published_at is null", Long.class);
+            Long pending = jdbcTemplate.queryForObject(
+                    "select count(*) from outbox_event where published_at is null", Long.class);
             return pending == null ? 0 : pending;
         } catch (RuntimeException e) {
             return Double.NaN;

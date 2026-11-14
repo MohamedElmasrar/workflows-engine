@@ -27,9 +27,10 @@ public class KafkaResultPublisher implements ResultPublisher {
 
     @Override
     public void publish(String eventType, String executionId, Object payload) {
-        EventEnvelope envelope =
-                codec.envelope(eventType, executionId, payload, MessageContext.correlationId(), MessageContext.causationId());
-        ProducerRecord<String, String> record = new ProducerRecord<>(Topics.NODE_RESULTS, executionId, codec.write(envelope));
+        EventEnvelope envelope = codec.envelope(
+                eventType, executionId, payload, MessageContext.correlationId(), MessageContext.causationId());
+        ProducerRecord<String, String> record =
+                new ProducerRecord<>(Topics.NODE_RESULTS, executionId, codec.write(envelope));
         record.headers().add("x-event-type", eventType.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         try {
             kafka.send(record).get(15, TimeUnit.SECONDS);

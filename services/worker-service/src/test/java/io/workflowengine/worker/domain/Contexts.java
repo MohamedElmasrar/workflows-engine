@@ -15,6 +15,12 @@ public final class Contexts {
 
     public static NodeExecutionContext context(NodeType type, Duration timeout) {
         return new NodeExecutionContext(
-                UUID.fromString("00000000-0000-0000-0000-000000000001"), UUID.randomUUID(), "node", type, UUID.randomUUID(), 1, timeout);
+                UUID.fromString("00000000-0000-0000-0000-000000000001"),
+                UUID.randomUUID(),
+                "node",
+                type,
+                UUID.randomUUID(),
+                1,
+                timeout);
     }
 }

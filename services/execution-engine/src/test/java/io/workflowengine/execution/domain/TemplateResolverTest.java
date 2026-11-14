@@ -22,26 +22,40 @@ class TemplateResolverTest {
     @Test
     void wholeValuePlaceholderKeepsJsonType() {
         assertThat(resolve("{\"v\":\"{{ trigger.body.n }}\"}").get("v").isInt()).isTrue();
-        assertThat(resolve("{\"v\":\"{{trigger.body.tags}}\"}").get("v").isArray()).isTrue();
-        assertThat(resolve("{\"v\":\"{{ nodes.http.output.body.items[0].id }}\"}").get("v").asInt()).isEqualTo(7);
+        assertThat(resolve("{\"v\":\"{{trigger.body.tags}}\"}").get("v").isArray())
+                .isTrue();
+        assertThat(resolve("{\"v\":\"{{ nodes.http.output.body.items[0].id }}\"}")
+                        .get("v")
+                        .asInt())
+                .isEqualTo(7);
     }
 
     @Test
     void interpolationProducesText() {
-        assertThat(resolve("{\"v\":\"Hi {{ trigger.body.name }} ({{ execution.id }})\"}").get("v").asText())
+        assertThat(resolve("{\"v\":\"Hi {{ trigger.body.name }} ({{ execution.id }})\"}")
+                        .get("v")
+                        .asText())
                 .isEqualTo("Hi Ada (exec-1)");
     }
 
     @Test
     void missingPathsResolveToNullOrEmptyText() {
-        assertThat(resolve("{\"v\":\"{{ trigger.body.missing }}\"}").get("v").isNull()).isTrue();
-        assertThat(resolve("{\"v\":\"x{{ nodes.unknown.output.a }}y\"}").get("v").asText()).isEqualTo("xy");
+        assertThat(resolve("{\"v\":\"{{ trigger.body.missing }}\"}").get("v").isNull())
+                .isTrue();
+        assertThat(resolve("{\"v\":\"x{{ nodes.unknown.output.a }}y\"}")
+                        .get("v")
+                        .asText())
+                .isEqualTo("xy");
     }
 
     @Test
     void unsupportedExpressionsAreNotEvaluated() {
-        assertThat(resolve("{\"v\":\"{{ T(java.lang.Runtime).getRuntime() }}\"}").get("v").isNull()).isTrue();
-        assertThat(resolve("{\"v\":\"{{ trigger.body.name + 1 }}\"}").get("v").isNull()).isTrue();
+        assertThat(resolve("{\"v\":\"{{ T(java.lang.Runtime).getRuntime() }}\"}")
+                        .get("v")
+                        .isNull())
+                .isTrue();
+        assertThat(resolve("{\"v\":\"{{ trigger.body.name + 1 }}\"}").get("v").isNull())
+                .isTrue();
     }
 
     @Test

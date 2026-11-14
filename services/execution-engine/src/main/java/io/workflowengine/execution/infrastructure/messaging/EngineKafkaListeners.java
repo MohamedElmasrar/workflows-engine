@@ -56,7 +56,8 @@ public class EngineKafkaListeners {
                     WorkflowAccessUpdated e = codec.payload(envelope, WorkflowAccessUpdated.class);
                     Map<String, String> roles = new HashMap<>();
                     e.entries().forEach(entry -> roles.put(entry.userId(), entry.role()));
-                    projections.accessUpdated(envelope.eventId(), e.workflowId(), e.ownerId(), e.aclRevision(), e.archived(), roles);
+                    projections.accessUpdated(
+                            envelope.eventId(), e.workflowId(), e.ownerId(), e.aclRevision(), e.archived(), roles);
                 }
                 case EventTypes.WORKFLOW_VERSION_PUBLISHED -> {
                     WorkflowVersionPublished e = codec.payload(envelope, WorkflowVersionPublished.class);
@@ -67,7 +68,9 @@ public class EngineKafkaListeners {
                             e.publishedAt());
                 }
                 case EventTypes.WORKFLOW_ARCHIVED ->
-                        projections.archived(envelope.eventId(), codec.payload(envelope, WorkflowArchived.class).workflowId());
+                    projections.archived(
+                            envelope.eventId(),
+                            codec.payload(envelope, WorkflowArchived.class).workflowId());
                 default -> log.debug("Ignoring workflow event type {}", envelope.eventType());
             }
         }
@@ -90,8 +93,14 @@ public class EngineKafkaListeners {
             }
             executions.start(
                     new StartExecution(
-                            r.executionId(), r.workflowId(), r.workflowVersion(), r.input(), type, r.triggeredBy(),
-                            r.idempotencyKey(), null),
+                            r.executionId(),
+                            r.workflowId(),
+                            r.workflowVersion(),
+                            r.input(),
+                            type,
+                            r.triggeredBy(),
+                            r.idempotencyKey(),
+                            null),
                     envelope.eventId());
         } catch (ExecutionStateException | IllegalArgumentException e) {
             throw new NonRetryableMessageException("Execution request rejected: " + e.getMessage(), e);
@@ -109,12 +118,19 @@ public class EngineKafkaListeners {
             switch (envelope.eventType()) {
                 case EventTypes.NODE_EXECUTION_STARTED -> {
                     NodeExecutionStarted e = codec.payload(envelope, NodeExecutionStarted.class);
-                    executions.nodeStarted(envelope.eventId(), e.executionId(), e.nodeId(), e.attemptId(), e.workerId());
+                    executions.nodeStarted(
+                            envelope.eventId(), e.executionId(), e.nodeId(), e.attemptId(), e.workerId());
                 }
                 case EventTypes.NODE_EXECUTION_COMPLETED -> {
                     NodeExecutionCompleted e = codec.payload(envelope, NodeExecutionCompleted.class);
                     executions.nodeCompleted(
-                            envelope.eventId(), e.executionId(), e.nodeId(), e.attemptId(), e.output(), e.branch(), e.workerId());
+                            envelope.eventId(),
+                            e.executionId(),
+                            e.nodeId(),
+                            e.attemptId(),
+                            e.output(),
+                            e.branch(),
+                            e.workerId());
                 }
                 case EventTypes.NODE_EXECUTION_FAILED -> {
                     NodeExecutionFailed e = codec.payload(envelope, NodeExecutionFailed.class);
@@ -123,7 +139,10 @@ public class EngineKafkaListeners {
                             e.executionId(),
                             e.nodeId(),
                             e.attemptId(),
-                            new NodeFailure(e.error().code(), e.error().message(), e.error().retryable()),
+                            new NodeFailure(
+                                    e.error().code(),
+                                    e.error().message(),
+                                    e.error().retryable()),
                             e.workerId());
                 }
                 default -> log.debug("Ignoring node result type {}", envelope.eventType());

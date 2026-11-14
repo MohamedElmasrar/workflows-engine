@@ -39,7 +39,12 @@ final class WorkflowSpecifications {
         if (search == null || search.isBlank()) {
             return (root, query, cb) -> cb.conjunction();
         }
-        String pattern = "%" + search.strip().toLowerCase().replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%";
+        String pattern = "%"
+                + search.strip()
+                        .toLowerCase()
+                        .replace("\\", "\\\\")
+                        .replace("%", "\\%")
+                        .replace("_", "\\_") + "%";
         return (root, query, cb) -> cb.like(cb.lower(root.get("name")), pattern, '\\');
     }
 }

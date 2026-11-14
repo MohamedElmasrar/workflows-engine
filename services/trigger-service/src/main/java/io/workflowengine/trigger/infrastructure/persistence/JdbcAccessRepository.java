@@ -24,20 +24,25 @@ public class JdbcAccessRepository implements AccessRepository {
                 on conflict (workflow_id) do update set owner_id = excluded.owner_id, acl_revision = excluded.acl_revision
                 where workflow_acl_revision.acl_revision < excluded.acl_revision
                 """,
-                workflowId, ownerId, aclRevision);
+                workflowId,
+                ownerId,
+                aclRevision);
         if (updated == 0) {
             return false;
         }
         jdbc.update("delete from workflow_access where workflow_id = ?", workflowId);
         jdbc.batchUpdate(
                 "insert into workflow_access (workflow_id, user_id, role) values (?, ?, ?)",
-                roles.entrySet().stream().map(e -> new Object[] {workflowId, e.getKey(), e.getValue()}).toList());
+                roles.entrySet().stream()
+                        .map(e -> new Object[] {workflowId, e.getKey(), e.getValue()})
+                        .toList());
         return true;
     }
 
     @Override
     public Optional<String> roleOf(UUID workflowId, String userId) {
-        return jdbc.query(
+        return jdbc
+                .query(
                         "select role from workflow_access where workflow_id = ? and user_id = ?",
                         (rs, i) -> rs.getString(1),
                         workflowId,

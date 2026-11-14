@@ -42,7 +42,11 @@ public class JpaExecutionRepository implements ExecutionRepository {
     private final ObjectMapper objectMapper;
 
     public JpaExecutionRepository(
-            EntityManager em, JdbcTemplate jdbc, WorkflowCatalog catalog, EngineSettings settings, ObjectMapper objectMapper) {
+            EntityManager em,
+            JdbcTemplate jdbc,
+            WorkflowCatalog catalog,
+            EngineSettings settings,
+            ObjectMapper objectMapper) {
         this.em = em;
         this.jdbc = jdbc;
         this.catalog = catalog;
@@ -69,7 +73,8 @@ public class JpaExecutionRepository implements ExecutionRepository {
 
     @Override
     public Optional<UUID> findIdByIdempotencyKey(UUID workflowId, String key) {
-        return jdbc.query(
+        return jdbc
+                .query(
                         "select id from workflow_execution where workflow_id = ? and idempotency_key = ?",
                         (rs, i) -> rs.getObject(1, UUID.class),
                         workflowId,
@@ -110,7 +115,9 @@ public class JpaExecutionRepository implements ExecutionRepository {
     @Override
     public long countRunning(UUID workflowId) {
         Long count = jdbc.queryForObject(
-                "select count(*) from workflow_execution where workflow_id = ? and status = 'RUNNING'", Long.class, workflowId);
+                "select count(*) from workflow_execution where workflow_id = ? and status = 'RUNNING'",
+                Long.class,
+                workflowId);
         return count == null ? 0 : count;
     }
 
@@ -130,7 +137,11 @@ public class JpaExecutionRepository implements ExecutionRepository {
                 ) due limit ?
                 """,
                 (rs, i) -> rs.getObject(1, UUID.class),
-                ts, ts, ts, ts, limit);
+                ts,
+                ts,
+                ts,
+                ts,
+                limit);
     }
 
     @Override
@@ -152,8 +163,8 @@ public class JpaExecutionRepository implements ExecutionRepository {
 
     private WorkflowExecution toDomain(WorkflowExecutionEntity e) {
         ExecutionGraph graph = ExecutionGraph.parse(catalog.version(e.workflowId, e.workflowVersion)
-                .orElseThrow(() -> new IllegalStateException(
-                        "Missing version snapshot " + e.workflowId + "@" + e.workflowVersion))
+                .orElseThrow(() ->
+                        new IllegalStateException("Missing version snapshot " + e.workflowId + "@" + e.workflowVersion))
                 .definition());
         Map<String, List<NodeAttemptEntity>> attempts = em.createQuery(
                         "select a from NodeAttemptEntity a where a.executionId = :id order by a.attemptNumber",
@@ -220,7 +231,8 @@ public class JpaExecutionRepository implements ExecutionRepository {
     }
 
     private Map<String, NodeExecutionEntity> nodeEntities(UUID executionId) {
-        return em.createQuery("select n from NodeExecutionEntity n where n.executionId = :id", NodeExecutionEntity.class)
+        return em.createQuery(
+                        "select n from NodeExecutionEntity n where n.executionId = :id", NodeExecutionEntity.class)
                 .setParameter("id", executionId)
                 .getResultStream()
                 .collect(Collectors.toMap(n -> n.nodeId, n -> n));
@@ -271,7 +283,11 @@ public class JpaExecutionRepository implements ExecutionRepository {
                 boolean isNew = entity == null;
                 if (isNew) {
                     entity = new NodeAttemptEntity(
-                            attempt.attemptId(), execution.id(), node.nodeId(), attempt.number(), attempt.dispatchedAt());
+                            attempt.attemptId(),
+                            execution.id(),
+                            node.nodeId(),
+                            attempt.number(),
+                            attempt.dispatchedAt());
                 }
                 entity.status = attempt.status().name();
                 entity.workerId = attempt.workerId();

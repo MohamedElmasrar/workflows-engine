@@ -44,8 +44,12 @@ public class AesGcmSecretProtector implements SecretProtector {
             Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
             cipher.init(Cipher.ENCRYPT_MODE, key, new GCMParameterSpec(TAG_BITS, nonce));
             byte[] encrypted = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
-            return "v1:" + Base64.getEncoder().encodeToString(ByteBuffer.allocate(nonce.length + encrypted.length)
-                    .put(nonce).put(encrypted).array());
+            return "v1:"
+                    + Base64.getEncoder()
+                            .encodeToString(ByteBuffer.allocate(nonce.length + encrypted.length)
+                                    .put(nonce)
+                                    .put(encrypted)
+                                    .array());
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException("Encryption failed", e);
         }
@@ -69,7 +73,8 @@ public class AesGcmSecretProtector implements SecretProtector {
     @Override
     public String hashToken(String token) {
         try {
-            return HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8)));
+            return HexFormat.of()
+                    .formatHex(MessageDigest.getInstance("SHA-256").digest(token.getBytes(StandardCharsets.UTF_8)));
         } catch (GeneralSecurityException e) {
             throw new IllegalStateException(e);
         }

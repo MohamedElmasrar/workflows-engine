@@ -40,7 +40,10 @@ public class WorkflowExceptionAdvice {
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     ProblemDetail lockConflict(ObjectOptimisticLockingFailureException e) {
         return problem(
-                HttpStatus.CONFLICT, "revision-conflict", "Concurrent modification", "The workflow was modified concurrently; reload and retry");
+                HttpStatus.CONFLICT,
+                "revision-conflict",
+                "Concurrent modification",
+                "The workflow was modified concurrently; reload and retry");
     }
 
     @ExceptionHandler(InvalidWorkflowException.class)

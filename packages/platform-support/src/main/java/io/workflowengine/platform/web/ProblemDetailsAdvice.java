@@ -75,7 +75,11 @@ public class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
             return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE).body(tooLarge(tooLarge));
         }
         return ResponseEntity.badRequest()
-                .body(problem(HttpStatus.BAD_REQUEST, "malformed-request", "Malformed request", "The request body could not be parsed"));
+                .body(problem(
+                        HttpStatus.BAD_REQUEST,
+                        "malformed-request",
+                        "Malformed request",
+                        "The request body could not be parsed"));
     }
 
     @ExceptionHandler(Exception.class)

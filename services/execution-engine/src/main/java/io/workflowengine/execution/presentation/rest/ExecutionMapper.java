@@ -55,7 +55,10 @@ final class ExecutionMapper {
                 SensitiveDataMasker.mask(n.input()),
                 SensitiveDataMasker.mask(n.output()),
                 n.branch(),
-                n.error() == null ? null : new NodeErrorResponse(n.error().code(), n.error().message(), n.error().retryable()),
+                n.error() == null
+                        ? null
+                        : new NodeErrorResponse(
+                                n.error().code(), n.error().message(), n.error().retryable()),
                 n.startedAt(),
                 n.finishedAt(),
                 duration(n.startedAt(), n.finishedAt()),
@@ -63,19 +66,39 @@ final class ExecutionMapper {
                 n.resumeAt(),
                 n.attempts().stream()
                         .map(a -> new AttemptResponse(
-                                a.attemptId(), a.number(), a.status().name(), a.workerId(), a.dispatchedAt(),
-                                a.startedAt(), a.finishedAt(), a.errorCode(), a.errorMessage()))
+                                a.attemptId(),
+                                a.number(),
+                                a.status().name(),
+                                a.workerId(),
+                                a.dispatchedAt(),
+                                a.startedAt(),
+                                a.finishedAt(),
+                                a.errorCode(),
+                                a.errorMessage()))
                         .toList());
     }
 
     static ExecutionSummaryResponse toSummary(ExecutionSummary s) {
         return new ExecutionSummaryResponse(
-                s.id(), s.workflowId(), s.workflowName(), s.workflowVersion(), s.status(), s.triggerType(),
-                s.triggeredBy(), s.createdAt(), s.startedAt(), s.finishedAt(), duration(s.startedAt(), s.finishedAt()),
-                s.errorCode(), s.errorMessage(), s.retryOf());
+                s.id(),
+                s.workflowId(),
+                s.workflowName(),
+                s.workflowVersion(),
+                s.status(),
+                s.triggerType(),
+                s.triggeredBy(),
+                s.createdAt(),
+                s.startedAt(),
+                s.finishedAt(),
+                duration(s.startedAt(), s.finishedAt()),
+                s.errorCode(),
+                s.errorMessage(),
+                s.retryOf());
     }
 
     private static Long duration(Instant start, Instant end) {
-        return start == null || end == null ? null : Duration.between(start, end).toMillis();
+        return start == null || end == null
+                ? null
+                : Duration.between(start, end).toMillis();
     }
 }

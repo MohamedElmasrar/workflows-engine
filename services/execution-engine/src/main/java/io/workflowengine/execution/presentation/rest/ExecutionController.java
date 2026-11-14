@@ -51,8 +51,9 @@ public class ExecutionController {
     }
 
     @PostMapping("/api/v1/workflows/{workflowId}/executions")
-    @Operation(summary = "Start a manual execution of the latest (or a given) published version. "
-            + "An Idempotency-Key header makes retries of this request safe.")
+    @Operation(
+            summary = "Start a manual execution of the latest (or a given) published version. "
+                    + "An Idempotency-Key header makes retries of this request safe.")
     public ResponseEntity<ExecutionResponse> start(
             Authentication auth,
             @PathVariable UUID workflowId,
@@ -60,12 +61,17 @@ public class ExecutionController {
             @RequestBody(required = false) StartExecutionRequest body) {
         Actor actor = actor(auth);
         StartResult result = commands.startManual(
-                actor, workflowId, body == null ? null : body.version(), body == null ? null : body.input(), idempotencyKey);
+                actor,
+                workflowId,
+                body == null ? null : body.version(),
+                body == null ? null : body.input(),
+                idempotencyKey);
         ExecutionResponse response = ExecutionMapper.toResponse(queries.get(actor, result.executionId()));
         if (!result.created()) {
             return ResponseEntity.ok(response);
         }
-        return ResponseEntity.created(URI.create("/api/v1/executions/" + result.executionId())).body(response);
+        return ResponseEntity.created(URI.create("/api/v1/executions/" + result.executionId()))
+                .body(response);
     }
 
     @GetMapping("/api/v1/executions")
@@ -79,7 +85,8 @@ public class ExecutionController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         Page<ExecutionSummary> result = queries.search(
-                actor(auth), new ExecutionFilter(workflowId, status == null ? null : status.name(), from, to, page, size));
+                actor(auth),
+                new ExecutionFilter(workflowId, status == null ? null : status.name(), from, to, page, size));
         return new PageResponse<>(
                 result.items().stream().map(ExecutionMapper::toSummary).toList(),
                 result.page(),
@@ -98,7 +105,9 @@ public class ExecutionController {
                 stats.failedToday(),
                 stats.running(),
                 stats.pending(),
-                queries.recent(actor, 10).stream().map(ExecutionMapper::toSummary).toList());
+                queries.recent(actor, 10).stream()
+                        .map(ExecutionMapper::toSummary)
+                        .toList());
     }
 
     @GetMapping("/api/v1/executions/{id}")

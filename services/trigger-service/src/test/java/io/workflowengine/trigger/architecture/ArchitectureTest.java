@@ -14,24 +14,37 @@ class ArchitectureTest {
     @ArchTest
     static final ArchRule layers = Architectures.layeredArchitecture()
             .consideringOnlyDependenciesInLayers()
-            .layer("Domain").definedBy("..domain..")
-            .layer("Application").definedBy("..application..")
-            .layer("Infrastructure").definedBy("..infrastructure..")
-            .layer("Presentation").definedBy("..presentation..")
-            .whereLayer("Presentation").mayNotBeAccessedByAnyLayer()
-            .whereLayer("Infrastructure").mayNotBeAccessedByAnyLayer()
-            .whereLayer("Application").mayOnlyBeAccessedByLayers("Presentation", "Infrastructure")
-            .whereLayer("Domain").mayOnlyBeAccessedByLayers("Application", "Presentation", "Infrastructure");
+            .layer("Domain")
+            .definedBy("..domain..")
+            .layer("Application")
+            .definedBy("..application..")
+            .layer("Infrastructure")
+            .definedBy("..infrastructure..")
+            .layer("Presentation")
+            .definedBy("..presentation..")
+            .whereLayer("Presentation")
+            .mayNotBeAccessedByAnyLayer()
+            .whereLayer("Infrastructure")
+            .mayNotBeAccessedByAnyLayer()
+            .whereLayer("Application")
+            .mayOnlyBeAccessedByLayers("Presentation", "Infrastructure")
+            .whereLayer("Domain")
+            .mayOnlyBeAccessedByLayers("Application", "Presentation", "Infrastructure");
 
     @ArchTest
     static final ArchRule domainIsFrameworkFree = noClasses()
-            .that().resideInAPackage("..domain..")
-            .should().dependOnClassesThat()
-            .resideInAnyPackage("org.springframework..", "jakarta.persistence..", "org.hibernate..", "org.apache.kafka..");
+            .that()
+            .resideInAPackage("..domain..")
+            .should()
+            .dependOnClassesThat()
+            .resideInAnyPackage(
+                    "org.springframework..", "jakarta.persistence..", "org.hibernate..", "org.apache.kafka..");
 
     @ArchTest
     static final ArchRule applicationDoesNotUseWebOrPersistence = noClasses()
-            .that().resideInAPackage("..application..")
-            .should().dependOnClassesThat()
+            .that()
+            .resideInAPackage("..application..")
+            .should()
+            .dependOnClassesThat()
             .resideInAnyPackage("org.springframework.web..", "jakarta.persistence..", "org.springframework.kafka..");
 }

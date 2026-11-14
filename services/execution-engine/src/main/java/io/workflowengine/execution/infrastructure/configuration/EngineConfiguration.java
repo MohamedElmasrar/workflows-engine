@@ -75,6 +75,9 @@ public class EngineConfiguration {
     }
 
     private static NewTopic topic(String name, MessagingProperties p) {
-        return TopicBuilder.name(name).partitions(p.getPartitions()).replicas(p.getReplicationFactor()).build();
+        return TopicBuilder.name(name)
+                .partitions(p.getPartitions())
+                .replicas(p.getReplicationFactor())
+                .build();
     }
 }

@@ -12,9 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class TriggerQueryService {
 
-    public record WebhookView(String url, boolean active, boolean requireSignature, List<String> requiredFields, int version) {}
+    public record WebhookView(
+            String url, boolean active, boolean requireSignature, List<String> requiredFields, int version) {}
 
-    public record ScheduleView(String cron, String timezone, boolean active, Instant nextFireAt, Instant lastFiredAt, int version) {}
+    public record ScheduleView(
+            String cron, String timezone, boolean active, Instant nextFireAt, Instant lastFiredAt, int version) {}
 
     public record TriggersView(WebhookView webhook, ScheduleView schedule) {}
 
@@ -43,11 +45,17 @@ public class TriggerQueryService {
         boolean canSeeSecrets = role.equals("OWNER") || role.equals("EDITOR");
         WebhookView webhook = triggers.webhookByWorkflow(workflowId)
                 .map(w -> new WebhookView(
-                        canSeeSecrets ? publicBaseUrl + "/api/v1/webhooks/" + secrets.decrypt(w.encryptedToken()) : null,
-                        w.active(), w.requireSignature(), w.requiredFields(), w.workflowVersion()))
+                        canSeeSecrets
+                                ? publicBaseUrl + "/api/v1/webhooks/" + secrets.decrypt(w.encryptedToken())
+                                : null,
+                        w.active(),
+                        w.requireSignature(),
+                        w.requiredFields(),
+                        w.workflowVersion()))
                 .orElse(null);
         ScheduleView schedule = triggers.scheduleByWorkflow(workflowId)
-                .map(s -> new ScheduleView(s.cron(), s.timezone(), s.active(), s.nextFireAt(), s.lastFiredAt(), s.workflowVersion()))
+                .map(s -> new ScheduleView(
+                        s.cron(), s.timezone(), s.active(), s.nextFireAt(), s.lastFiredAt(), s.workflowVersion()))
                 .orElse(null);
         return new TriggersView(webhook, schedule);
     }

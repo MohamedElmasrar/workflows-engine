@@ -60,10 +60,12 @@ public class GraphValidator {
                 continue;
             }
             if (nodes.putIfAbsent(node.id(), node) != null) {
-                errors.add(ValidationIssue.node("DUPLICATE_NODE_ID", node.id(), "Node id '" + node.id() + "' is used more than once"));
+                errors.add(ValidationIssue.node(
+                        "DUPLICATE_NODE_ID", node.id(), "Node id '" + node.id() + "' is used more than once"));
             }
             if (node.nodeType().isEmpty()) {
-                errors.add(ValidationIssue.node("UNKNOWN_NODE_TYPE", node.id(), "Unknown node type '" + node.type() + "'"));
+                errors.add(ValidationIssue.node(
+                        "UNKNOWN_NODE_TYPE", node.id(), "Unknown node type '" + node.type() + "'"));
             }
         }
         if (nodes.isEmpty()) {
@@ -77,8 +79,8 @@ public class GraphValidator {
         if (triggers.isEmpty()) {
             errors.add(ValidationIssue.general("MISSING_TRIGGER", "The workflow needs exactly one trigger node"));
         } else if (triggers.size() > 1) {
-            triggers.forEach(t -> errors.add(
-                    ValidationIssue.node("MULTIPLE_TRIGGERS", t.id(), "Only one trigger node is allowed per workflow")));
+            triggers.forEach(t -> errors.add(ValidationIssue.node(
+                    "MULTIPLE_TRIGGERS", t.id(), "Only one trigger node is allowed per workflow")));
         }
     }
 
@@ -97,8 +99,8 @@ public class GraphValidator {
             Node source = nodes.get(edge.source());
             Node target = nodes.get(edge.target());
             if (source == null || target == null) {
-                errors.add(ValidationIssue.edge(
-                        "DANGLING_EDGE", edge.id(), "Edge references a node that does not exist"));
+                errors.add(
+                        ValidationIssue.edge("DANGLING_EDGE", edge.id(), "Edge references a node that does not exist"));
                 continue;
             }
             if (edge.source().equals(edge.target())) {
@@ -177,7 +179,9 @@ public class GraphValidator {
         for (Edge edge : outgoing) {
             if (!"true".equals(edge.sourceHandle()) && !"false".equals(edge.sourceHandle())) {
                 errors.add(ValidationIssue.edge(
-                        "MISSING_BRANCH_HANDLE", edge.id(), "Connections from a condition must use its true or false output"));
+                        "MISSING_BRANCH_HANDLE",
+                        edge.id(),
+                        "Connections from a condition must use its true or false output"));
             }
         }
         if (outgoing.isEmpty()) {
@@ -200,20 +204,25 @@ public class GraphValidator {
                     ZoneId.of(config.path("timezone").asText(""));
                 } catch (DateTimeException e) {
                     errors.add(ValidationIssue.node(
-                            "INVALID_TIMEZONE", node.id(), "Unknown time zone '" + config.path("timezone").asText() + "'"));
+                            "INVALID_TIMEZONE",
+                            node.id(),
+                            "Unknown time zone '" + config.path("timezone").asText() + "'"));
                 }
             }
             case HTTP_REQUEST -> {
                 String url = config.path("url").asText("");
                 if (!url.startsWith("{{") && !url.matches("(?i)^https?://.+")) {
-                    errors.add(ValidationIssue.node("INVALID_URL", node.id(), "URL must start with http:// or https://"));
+                    errors.add(
+                            ValidationIssue.node("INVALID_URL", node.id(), "URL must start with http:// or https://"));
                 }
             }
             case CONDITION -> {
                 for (JsonNode condition : config.path("conditions")) {
                     if (!"EXISTS".equals(condition.path("operator").asText()) && !condition.has("right")) {
                         errors.add(ValidationIssue.node(
-                                "MISSING_OPERAND", node.id(), "Operator " + condition.path("operator").asText() + " requires a right-hand value"));
+                                "MISSING_OPERAND",
+                                node.id(),
+                                "Operator " + condition.path("operator").asText() + " requires a right-hand value"));
                     }
                 }
             }
@@ -243,7 +252,8 @@ public class GraphValidator {
                     errors.add(ValidationIssue.node(
                             "INVALID_REFERENCE",
                             node.id(),
-                            "'" + ref.expression() + "' references node '" + ref.nodeId() + "', which does not run before this node"));
+                            "'" + ref.expression() + "' references node '" + ref.nodeId()
+                                    + "', which does not run before this node"));
                 }
             }
         }

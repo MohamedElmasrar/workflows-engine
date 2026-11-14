@@ -17,7 +17,8 @@ public record WorkflowSearchCriteria(
         if (size < 1 || size > 100) {
             throw new IllegalArgumentException("size must be between 1 and 100");
         }
-        if (sortField == null || !(sortField.equals("name") || sortField.equals("createdAt") || sortField.equals("updatedAt"))) {
+        if (sortField == null
+                || !(sortField.equals("name") || sortField.equals("createdAt") || sortField.equals("updatedAt"))) {
             sortField = "updatedAt";
         }
     }

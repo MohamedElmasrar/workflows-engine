@@ -79,28 +79,99 @@ public class WorkflowEntity {
         this.createdAt = createdAt;
     }
 
-    public UUID getId() { return id; }
-    public String getOwnerId() { return ownerId; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    public String getStatus() { return status; }
-    public void setStatus(String status) { this.status = status; }
-    public JsonNode getDraftDefinition() { return draftDefinition; }
-    public void setDraftDefinition(JsonNode draftDefinition) { this.draftDefinition = draftDefinition; }
-    public long getRevision() { return revision; }
-    public void setRevision(long revision) { this.revision = revision; }
-    public Integer getLatestVersion() { return latestVersion; }
-    public void setLatestVersion(Integer latestVersion) { this.latestVersion = latestVersion; }
-    public Long getPublishedRevision() { return publishedRevision; }
-    public void setPublishedRevision(Long publishedRevision) { this.publishedRevision = publishedRevision; }
-    public long getAclRevision() { return aclRevision; }
-    public void setAclRevision(long aclRevision) { this.aclRevision = aclRevision; }
-    public Instant getCreatedAt() { return createdAt; }
-    public Instant getUpdatedAt() { return updatedAt; }
-    public void setUpdatedAt(Instant updatedAt) { this.updatedAt = updatedAt; }
-    public Instant getArchivedAt() { return archivedAt; }
-    public void setArchivedAt(Instant archivedAt) { this.archivedAt = archivedAt; }
-    public Set<PermissionEmbeddable> getPermissions() { return permissions; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getOwnerId() {
+        return ownerId;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public JsonNode getDraftDefinition() {
+        return draftDefinition;
+    }
+
+    public void setDraftDefinition(JsonNode draftDefinition) {
+        this.draftDefinition = draftDefinition;
+    }
+
+    public long getRevision() {
+        return revision;
+    }
+
+    public void setRevision(long revision) {
+        this.revision = revision;
+    }
+
+    public Integer getLatestVersion() {
+        return latestVersion;
+    }
+
+    public void setLatestVersion(Integer latestVersion) {
+        this.latestVersion = latestVersion;
+    }
+
+    public Long getPublishedRevision() {
+        return publishedRevision;
+    }
+
+    public void setPublishedRevision(Long publishedRevision) {
+        this.publishedRevision = publishedRevision;
+    }
+
+    public long getAclRevision() {
+        return aclRevision;
+    }
+
+    public void setAclRevision(long aclRevision) {
+        this.aclRevision = aclRevision;
+    }
+
+    public Instant getCreatedAt() {
+        return createdAt;
+    }
+
+    public Instant getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(Instant updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
+    public Instant getArchivedAt() {
+        return archivedAt;
+    }
+
+    public void setArchivedAt(Instant archivedAt) {
+        this.archivedAt = archivedAt;
+    }
+
+    public Set<PermissionEmbeddable> getPermissions() {
+        return permissions;
+    }
 }

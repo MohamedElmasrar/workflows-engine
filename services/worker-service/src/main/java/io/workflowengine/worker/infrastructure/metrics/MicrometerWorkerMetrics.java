@@ -26,6 +26,9 @@ public class MicrometerWorkerMetrics implements WorkerMetrics {
 
     @Override
     public void cachedResultReplayed(String nodeType) {
-        Counter.builder("worker.tasks.replayed").tag("nodeType", nodeType).register(registry).increment();
+        Counter.builder("worker.tasks.replayed")
+                .tag("nodeType", nodeType)
+                .register(registry)
+                .increment();
     }
 }

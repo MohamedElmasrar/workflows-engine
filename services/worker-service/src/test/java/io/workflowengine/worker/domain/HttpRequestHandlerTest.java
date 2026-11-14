@@ -18,29 +18,35 @@ class HttpRequestHandlerTest {
 
     private HttpGateway.HttpCall lastCall;
     private HttpGateway.HttpResponseData next;
-    private final HttpRequestHandler handler = new HttpRequestHandler(call -> {
-        lastCall = call;
-        return next;
-    }, new ObjectMapper());
+    private final HttpRequestHandler handler = new HttpRequestHandler(
+            call -> {
+                lastCall = call;
+                return next;
+            },
+            new ObjectMapper());
 
     private NodeResult run(String config) {
         return handler.execute(Contexts.context(NodeType.HTTP_REQUEST, Duration.ofSeconds(3)), json(config));
     }
 
     private static HttpGateway.HttpResponseData response(int status, String body) {
-        return new HttpGateway.HttpResponseData(status,
+        return new HttpGateway.HttpResponseData(
+                status,
                 Map.of("content-type", List.of("application/json"), "set-cookie", List.of("session=secret")),
-                body.getBytes(StandardCharsets.UTF_8), "application/json");
+                body.getBytes(StandardCharsets.UTF_8),
+                "application/json");
     }
 
     @Test
     void sendsJsonBodyQueryAndIdempotencyKeyAndParsesJsonResponse() {
         next = response(200, "{\"score\":91}");
-        NodeResult result = run("{\"method\":\"POST\",\"url\":\"https://api.example.com/score\",\"query\":{\"q\":\"a b\"},"
-                + "\"headers\":{\"X-Api\":\"1\"},\"body\":{\"orderId\":7}}");
+        NodeResult result =
+                run("{\"method\":\"POST\",\"url\":\"https://api.example.com/score\",\"query\":{\"q\":\"a b\"},"
+                        + "\"headers\":{\"X-Api\":\"1\"},\"body\":{\"orderId\":7}}");
 
         assertThat(lastCall.url()).isEqualTo("https://api.example.com/score?q=a+b");
-        assertThat(lastCall.headers()).containsEntry("Content-Type", "application/json")
+        assertThat(lastCall.headers())
+                .containsEntry("Content-Type", "application/json")
                 .containsEntry("Idempotency-Key", "00000000-0000-0000-0000-000000000001:node");
         assertThat(new String(lastCall.body(), StandardCharsets.UTF_8)).isEqualTo("{\"orderId\":7}");
         assertThat(lastCall.timeout()).isEqualTo(Duration.ofSeconds(3));
@@ -55,9 +61,11 @@ class HttpRequestHandlerTest {
         assertThat(run("{\"method\":\"GET\",\"url\":\"https://x.io\"}"))
                 .isEqualTo(new NodeResult.Failure("HTTP_5XX", "GET x.io returned HTTP 503", true));
         next = response(429, "{}");
-        assertThat(((NodeResult.Failure) run("{\"method\":\"GET\",\"url\":\"https://x.io\"}")).retryable()).isTrue();
+        assertThat(((NodeResult.Failure) run("{\"method\":\"GET\",\"url\":\"https://x.io\"}")).retryable())
+                .isTrue();
         next = response(404, "{}");
-        assertThat(((NodeResult.Failure) run("{\"method\":\"GET\",\"url\":\"https://x.io\"}")).retryable()).isFalse();
+        assertThat(((NodeResult.Failure) run("{\"method\":\"GET\",\"url\":\"https://x.io\"}")).retryable())
+                .isFalse();
         next = response(404, "{}");
         assertThat(run("{\"method\":\"GET\",\"url\":\"https://x.io\",\"failOnHttpError\":false}"))
                 .isInstanceOf(NodeResult.Success.class);

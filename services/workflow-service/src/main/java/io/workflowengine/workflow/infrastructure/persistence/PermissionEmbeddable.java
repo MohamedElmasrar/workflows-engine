@@ -29,10 +29,21 @@ public class PermissionEmbeddable {
         this.grantedAt = grantedAt;
     }
 
-    public String getUserId() { return userId; }
-    public String getRole() { return role; }
-    public String getGrantedBy() { return grantedBy; }
-    public Instant getGrantedAt() { return grantedAt; }
+    public String getUserId() {
+        return userId;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public String getGrantedBy() {
+        return grantedBy;
+    }
+
+    public Instant getGrantedAt() {
+        return grantedAt;
+    }
 
     @Override
     public boolean equals(Object o) {

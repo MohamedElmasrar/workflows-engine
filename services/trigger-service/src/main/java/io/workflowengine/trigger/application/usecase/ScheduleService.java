@@ -54,18 +54,31 @@ public class ScheduleService {
             DeliveryRepository.InsertResult result = deliveries.insertIfAbsent(new DeliveryRepository.Delivery(
                     UUID.randomUUID(), schedule.workflowId(), "SCHEDULE", dedupeKey, executionId, "REQUESTED", 0, now));
             if (result.created()) {
-                ObjectNode input = objectMapper.createObjectNode()
+                ObjectNode input = objectMapper
+                        .createObjectNode()
                         .put("scheduledAt", fireTime.toString())
                         .put("firedAt", now.toString());
                 input.set("payload", schedule.payload());
                 publisher.publish(new WorkflowExecutionRequested(
-                        executionId, schedule.workflowId(), schedule.workflowVersion(), "SCHEDULE",
-                        "schedule:" + schedule.id(), input, dedupeKey));
+                        executionId,
+                        schedule.workflowId(),
+                        schedule.workflowVersion(),
+                        "SCHEDULE",
+                        "schedule:" + schedule.id(),
+                        input,
+                        dedupeKey));
             }
             Instant next = policy.rescheduleAfterFiring(schedule.cron(), schedule.timezone(), fireTime, now);
             triggers.saveSchedule(new ScheduledTrigger(
-                    schedule.id(), schedule.workflowId(), schedule.workflowVersion(), schedule.cron(), schedule.timezone(),
-                    schedule.payload(), next, fireTime, true));
+                    schedule.id(),
+                    schedule.workflowId(),
+                    schedule.workflowVersion(),
+                    schedule.cron(),
+                    schedule.timezone(),
+                    schedule.payload(),
+                    next,
+                    fireTime,
+                    true));
         }
         return due.size();
     }

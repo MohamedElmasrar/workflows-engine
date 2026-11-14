@@ -11,11 +11,11 @@ public class SecurityConfiguration {
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf(c -> c.disable())
-                .authorizeHttpRequests(a -> a.requestMatchers("/actuator/health/**", "/actuator/info", "/actuator/prometheus")
-                        .permitAll()
-                        .anyRequest()
-                        .denyAll());
+        http.csrf(c -> c.disable()).authorizeHttpRequests(a -> a.requestMatchers(
+                        "/actuator/health/**", "/actuator/info", "/actuator/prometheus")
+                .permitAll()
+                .anyRequest()
+                .denyAll());
         return http.build();
     }
 }

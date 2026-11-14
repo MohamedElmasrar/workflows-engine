@@ -83,7 +83,8 @@ public class TriggerRegistrationService {
         }
     }
 
-    public void onAccessUpdated(UUID eventId, UUID workflowId, String ownerId, long aclRevision, Map<String, String> roles) {
+    public void onAccessUpdated(
+            UUID eventId, UUID workflowId, String ownerId, long aclRevision, Map<String, String> roles) {
         if (dedup.firstDelivery(CONSUMER, eventId)) {
             access.replace(workflowId, ownerId, aclRevision, roles);
         }
@@ -114,8 +115,15 @@ public class TriggerRegistrationService {
             encryptedSecret = existing.encryptedSecret();
         }
         triggers.saveWebhook(new WebhookEndpoint(
-                id, workflowId, version, tokenHash, encryptedToken, encryptedSecret, spec.requireSignature(),
-                spec.requiredFields(), true));
+                id,
+                workflowId,
+                version,
+                tokenHash,
+                encryptedToken,
+                encryptedSecret,
+                spec.requireSignature(),
+                spec.requiredFields(),
+                true));
     }
 
     private void activateSchedule(UUID workflowId, int version, TriggerSpec spec) {
@@ -151,8 +159,14 @@ public class TriggerRegistrationService {
                         "Workflow has no webhook trigger"));
         String secret = newSecret();
         triggers.saveWebhook(new WebhookEndpoint(
-                endpoint.id(), endpoint.workflowId(), endpoint.workflowVersion(), endpoint.tokenHash(),
-                endpoint.encryptedToken(), secrets.encrypt(secret), endpoint.requireSignature(), endpoint.requiredFields(),
+                endpoint.id(),
+                endpoint.workflowId(),
+                endpoint.workflowVersion(),
+                endpoint.tokenHash(),
+                endpoint.encryptedToken(),
+                secrets.encrypt(secret),
+                endpoint.requireSignature(),
+                endpoint.requiredFields(),
                 endpoint.active()));
         return secret;
     }

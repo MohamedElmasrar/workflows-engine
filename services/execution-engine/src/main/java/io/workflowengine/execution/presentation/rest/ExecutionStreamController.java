@@ -36,7 +36,8 @@ public class ExecutionStreamController {
     private static final Logger log = LoggerFactory.getLogger(ExecutionStreamController.class);
 
     private final ExecutionQueryService queries;
-    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(2, Thread.ofVirtual().factory());
+    private final ScheduledExecutorService scheduler =
+            Executors.newScheduledThreadPool(2, Thread.ofVirtual().factory());
     private final Duration pollInterval;
 
     public ExecutionStreamController(
@@ -52,7 +53,10 @@ public class ExecutionStreamController {
             @RequestHeader(value = "Last-Event-ID", required = false) Long lastEventId,
             @RequestParam(required = false) Long after) {
         List<HistoryEntryView> initial = queries.history(
-                ExecutionController.actor(auth), id, lastEventId != null ? lastEventId : after == null ? 0 : after, 500);
+                ExecutionController.actor(auth),
+                id,
+                lastEventId != null ? lastEventId : after == null ? 0 : after,
+                500);
         SseEmitter emitter = new SseEmitter(Duration.ofMinutes(30).toMillis());
         AtomicLong cursor = new AtomicLong(lastEventId != null ? lastEventId : after == null ? 0 : after);
         AtomicLong idleTicks = new AtomicLong();

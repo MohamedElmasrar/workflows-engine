@@ -43,8 +43,10 @@ public final class DefinitionFixtures {
     }
 
     public DefinitionFixtures edge(String source, String target, String handle) {
-        ObjectNode edge =
-                edges.addObject().put("id", "e" + (++edgeCounter)).put("source", source).put("target", target);
+        ObjectNode edge = edges.addObject()
+                .put("id", "e" + (++edgeCounter))
+                .put("source", source)
+                .put("target", target);
         if (handle != null) {
             edge.put("sourceHandle", handle);
         }

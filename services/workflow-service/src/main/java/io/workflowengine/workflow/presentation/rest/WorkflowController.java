@@ -1,5 +1,7 @@
 package io.workflowengine.workflow.presentation.rest;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import io.workflowengine.platform.security.CurrentUser;
 import io.workflowengine.workflow.application.command.WorkflowCommands;
 import io.workflowengine.workflow.application.query.PageResult;
@@ -25,8 +27,6 @@ import io.workflowengine.workflow.presentation.dto.WorkflowDtos.ValidationRespon
 import io.workflowengine.workflow.presentation.dto.WorkflowDtos.WorkflowResponse;
 import io.workflowengine.workflow.presentation.dto.WorkflowDtos.WorkflowSummaryResponse;
 import io.workflowengine.workflow.presentation.dto.WorkflowDtos.WorkflowVersionResponse;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.Collection;
@@ -62,11 +62,13 @@ public class WorkflowController {
 
     @PostMapping
     @Operation(summary = "Create a workflow draft")
-    public ResponseEntity<WorkflowResponse> create(Authentication auth, @Valid @RequestBody CreateWorkflowRequest body) {
+    public ResponseEntity<WorkflowResponse> create(
+            Authentication auth, @Valid @RequestBody CreateWorkflowRequest body) {
         Actor actor = actor(auth);
-        Workflow workflow =
-                commands.create(actor, new WorkflowCommands.CreateWorkflow(body.name(), body.description(), body.definition()));
-        return ResponseEntity.created(URI.create("/api/v1/workflows/" + workflow.id())).body(toResponse(workflow, actor));
+        Workflow workflow = commands.create(
+                actor, new WorkflowCommands.CreateWorkflow(body.name(), body.description(), body.definition()));
+        return ResponseEntity.created(URI.create("/api/v1/workflows/" + workflow.id()))
+                .body(toResponse(workflow, actor));
     }
 
     @GetMapping
@@ -110,7 +112,8 @@ public class WorkflowController {
         Actor actor = actor(auth);
         Workflow workflow = commands.update(
                 actor,
-                new WorkflowCommands.UpdateWorkflow(id, body.revision(), body.name(), body.description(), body.definition()));
+                new WorkflowCommands.UpdateWorkflow(
+                        id, body.revision(), body.name(), body.description(), body.definition()));
         return toResponse(workflow, actor);
     }
 
@@ -125,7 +128,8 @@ public class WorkflowController {
     public ResponseEntity<WorkflowResponse> duplicate(Authentication auth, @PathVariable UUID id) {
         Actor actor = actor(auth);
         Workflow copy = commands.duplicate(actor, id);
-        return ResponseEntity.created(URI.create("/api/v1/workflows/" + copy.id())).body(toResponse(copy, actor));
+        return ResponseEntity.created(URI.create("/api/v1/workflows/" + copy.id()))
+                .body(toResponse(copy, actor));
     }
 
     @PostMapping("/{id}/validate")
@@ -146,7 +150,9 @@ public class WorkflowController {
 
     @GetMapping("/{id}/versions")
     public List<WorkflowVersionResponse> versions(Authentication auth, @PathVariable UUID id) {
-        return queries.versions(actor(auth), id).stream().map(v -> toVersion(v, false)).toList();
+        return queries.versions(actor(auth), id).stream()
+                .map(v -> toVersion(v, false))
+                .toList();
     }
 
     @GetMapping("/{id}/versions/{version}")
@@ -166,7 +172,8 @@ public class WorkflowController {
             @PathVariable UUID id,
             @PathVariable String username,
             @Valid @RequestBody GrantPermissionRequest body) {
-        return toPermissions(commands.grant(actor(auth), new WorkflowCommands.GrantPermission(id, username, body.role())));
+        return toPermissions(
+                commands.grant(actor(auth), new WorkflowCommands.GrantPermission(id, username, body.role())));
     }
 
     @DeleteMapping("/{id}/permissions/{username}")
@@ -181,13 +188,15 @@ public class WorkflowController {
 
     private List<PermissionResponse> toPermissions(Workflow workflow) {
         Collection<Permission> permissions = workflow.permissions();
-        List<String> ids = new java.util.ArrayList<>(permissions.stream().map(Permission::userId).toList());
+        List<String> ids = new java.util.ArrayList<>(
+                permissions.stream().map(Permission::userId).toList());
         ids.add(workflow.ownerId());
         Map<String, String> names = queries.usernames(ids);
         List<PermissionResponse> result = new java.util.ArrayList<>();
         result.add(new PermissionResponse(
                 workflow.ownerId(), names.get(workflow.ownerId()), WorkflowRole.OWNER, workflow.createdAt()));
-        permissions.forEach(p -> result.add(new PermissionResponse(p.userId(), names.get(p.userId()), p.role(), p.grantedAt())));
+        permissions.forEach(
+                p -> result.add(new PermissionResponse(p.userId(), names.get(p.userId()), p.role(), p.grantedAt())));
         return result;
     }
 

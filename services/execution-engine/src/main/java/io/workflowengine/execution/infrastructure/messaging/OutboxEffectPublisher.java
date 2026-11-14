@@ -39,23 +39,31 @@ public class OutboxEffectPublisher implements ExecutionEffectPublisher {
                             key,
                             key + ":" + t.nodeId(),
                             new NodeExecutionScheduled(
-                                    t.executionId(), t.workflowId(), t.nodeId(), t.nodeType().name(), t.attemptId(),
-                                    t.attemptNumber(), t.timeoutMs(), t.config()));
+                                    t.executionId(),
+                                    t.workflowId(),
+                                    t.nodeId(),
+                                    t.nodeType().name(),
+                                    t.attemptId(),
+                                    t.attemptNumber(),
+                                    t.timeoutMs(),
+                                    t.config()));
                 }
-                case ExecutionEffect.LifecycleChanged lifecycle -> outbox.append(
-                        Topics.EXECUTION_LIFECYCLE,
-                        eventType(lifecycle.status()),
-                        key,
-                        new WorkflowExecutionLifecycleEvent(
-                                execution.id(),
-                                execution.workflowId(),
-                                execution.workflowVersion(),
-                                lifecycle.status().name(),
-                                Instant.now(),
-                                lifecycle.error() == null
-                                        ? null
-                                        : new WorkflowExecutionLifecycleEvent.ExecutionError(
-                                                lifecycle.error().code(), lifecycle.error().message())));
+                case ExecutionEffect.LifecycleChanged lifecycle ->
+                    outbox.append(
+                            Topics.EXECUTION_LIFECYCLE,
+                            eventType(lifecycle.status()),
+                            key,
+                            new WorkflowExecutionLifecycleEvent(
+                                    execution.id(),
+                                    execution.workflowId(),
+                                    execution.workflowVersion(),
+                                    lifecycle.status().name(),
+                                    Instant.now(),
+                                    lifecycle.error() == null
+                                            ? null
+                                            : new WorkflowExecutionLifecycleEvent.ExecutionError(
+                                                    lifecycle.error().code(),
+                                                    lifecycle.error().message())));
                 case ExecutionEffect.NodeAttemptFinished ignored -> {
                     // metrics only
                 }

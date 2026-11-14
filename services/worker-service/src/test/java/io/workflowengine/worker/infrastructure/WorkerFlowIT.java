@@ -64,16 +64,31 @@ class WorkerFlowIT {
     @Test
     void processesTasksAndAnswersRedeliveriesFromTheAttemptCache() throws Exception {
         UUID executionId = UUID.randomUUID();
-        NodeExecutionScheduled task = new NodeExecutionScheduled(executionId, UUID.randomUUID(), "shape", "TRANSFORM",
-                UUID.randomUUID(), 1, 5000, json.readTree("{\"set\":{\"answer\":42}}"));
-        EventEnvelope envelope = codec.envelope(EventTypes.NODE_EXECUTION_SCHEDULED, executionId.toString(), task, "corr-1", null);
+        NodeExecutionScheduled task = new NodeExecutionScheduled(
+                executionId,
+                UUID.randomUUID(),
+                "shape",
+                "TRANSFORM",
+                UUID.randomUUID(),
+                1,
+                5000,
+                json.readTree("{\"set\":{\"answer\":42}}"));
+        EventEnvelope envelope =
+                codec.envelope(EventTypes.NODE_EXECUTION_SCHEDULED, executionId.toString(), task, "corr-1", null);
 
         ConcurrentLinkedQueue<EventEnvelope> results = new ConcurrentLinkedQueue<>();
         Thread consumerThread = Thread.ofVirtual().start(() -> {
             try (KafkaConsumer<String, String> consumer = new KafkaConsumer<>(Map.of(
-                    "bootstrap.servers", String.join(",", connection.getBootstrapServers()),
-                    "group.id", "it-" + UUID.randomUUID(), "auto.offset.reset", "earliest",
-                    "key.deserializer", StringDeserializer.class, "value.deserializer", StringDeserializer.class))) {
+                    "bootstrap.servers",
+                    String.join(",", connection.getBootstrapServers()),
+                    "group.id",
+                    "it-" + UUID.randomUUID(),
+                    "auto.offset.reset",
+                    "earliest",
+                    "key.deserializer",
+                    StringDeserializer.class,
+                    "value.deserializer",
+                    StringDeserializer.class))) {
                 consumer.subscribe(List.of(Topics.NODE_RESULTS));
                 while (!Thread.currentThread().isInterrupted()) {
                     consumer.poll(Duration.ofMillis(200)).forEach(r -> results.add(codec.read(r.value())));
@@ -83,24 +98,34 @@ class WorkerFlowIT {
             }
         });
 
-        kafka.send(Topics.NODE_TASKS, executionId + ":shape", codec.write(envelope)).join();
-        await().atMost(Duration.ofSeconds(60)).until(() -> results.stream()
-                .anyMatch(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED)));
+        kafka.send(Topics.NODE_TASKS, executionId + ":shape", codec.write(envelope))
+                .join();
+        await().atMost(Duration.ofSeconds(60))
+                .until(() -> results.stream().anyMatch(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED)));
         EventEnvelope completed = results.stream()
-                .filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED)).findFirst().orElseThrow();
+                .filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED))
+                .findFirst()
+                .orElseThrow();
         NodeExecutionCompleted payload = codec.payload(completed, NodeExecutionCompleted.class);
         assertThat(payload.output().get("answer").asInt()).isEqualTo(42);
         assertThat(completed.correlationId()).isEqualTo("corr-1");
         assertThat(completed.causationId()).isEqualTo(envelope.eventId().toString());
 
         // Redelivery of the same task: the cached result is re-published, no second Started is emitted.
-        kafka.send(Topics.NODE_TASKS, executionId + ":shape", codec.write(envelope)).join();
-        await().atMost(Duration.ofSeconds(30)).until(() -> results.stream()
-                .filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED)).count() == 2);
-        assertThat(results.stream().filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_STARTED))).hasSize(1);
+        kafka.send(Topics.NODE_TASKS, executionId + ":shape", codec.write(envelope))
+                .join();
+        await().atMost(Duration.ofSeconds(30))
+                .until(() -> results.stream()
+                                .filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED))
+                                .count()
+                        == 2);
+        assertThat(results.stream().filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_STARTED)))
+                .hasSize(1);
         NodeExecutionCompleted replay = results.stream()
                 .filter(e -> e.eventType().equals(EventTypes.NODE_EXECUTION_COMPLETED))
-                .map(e -> codec.payload(e, NodeExecutionCompleted.class)).toList().get(1);
+                .map(e -> codec.payload(e, NodeExecutionCompleted.class))
+                .toList()
+                .get(1);
         assertThat(replay.completedAt()).isEqualTo(payload.completedAt());
         consumerThread.interrupt();
     }

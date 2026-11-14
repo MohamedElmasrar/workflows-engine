@@ -23,6 +23,11 @@ public class AppUserEntity {
 
     protected AppUserEntity() {}
 
-    public String getId() { return id; }
-    public String getUsername() { return username; }
+    public String getId() {
+        return id;
+    }
+
+    public String getUsername() {
+        return username;
+    }
 }

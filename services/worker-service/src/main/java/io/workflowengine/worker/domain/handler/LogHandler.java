@@ -44,7 +44,8 @@ public class LogHandler implements NodeHandler {
             case "INFO" -> log.info("{}", message);
             default -> throw NodeExecutionException.invalidConfig("Unsupported log level " + level);
         }
-        return NodeResult.success(JsonNodeFactory.instance.objectNode()
+        return NodeResult.success(JsonNodeFactory.instance
+                .objectNode()
                 .put("level", level)
                 .put("message", message)
                 .put("loggedAt", clock.instant().toString()));

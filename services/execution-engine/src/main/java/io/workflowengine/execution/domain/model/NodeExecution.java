@@ -28,7 +28,22 @@ public final class NodeExecution {
     private final List<NodeAttempt> attempts;
 
     public NodeExecution(String nodeId, String nodeType) {
-        this(nodeId, nodeType, NodeStatus.PENDING, 0, null, null, null, null, null, null, null, null, null, null, List.of());
+        this(
+                nodeId,
+                nodeType,
+                NodeStatus.PENDING,
+                0,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                List.of());
     }
 
     public NodeExecution(
@@ -141,26 +156,72 @@ public final class NodeExecution {
         if (currentAttemptId == null) {
             return Optional.empty();
         }
-        return attempts.stream().filter(a -> a.attemptId().equals(currentAttemptId)).findFirst();
+        return attempts.stream()
+                .filter(a -> a.attemptId().equals(currentAttemptId))
+                .findFirst();
     }
 
     public boolean isCurrentAttempt(UUID attemptId) {
         return currentAttemptId != null && currentAttemptId.equals(attemptId) && status.isActive();
     }
 
-    public String nodeId() { return nodeId; }
-    public String nodeType() { return nodeType; }
-    public NodeStatus status() { return status; }
-    public int attemptCount() { return attemptCount; }
-    public UUID currentAttemptId() { return currentAttemptId; }
-    public Instant availableAt() { return availableAt; }
-    public Instant leaseExpiresAt() { return leaseExpiresAt; }
-    public Instant resumeAt() { return resumeAt; }
-    public JsonNode input() { return input; }
-    public JsonNode output() { return output; }
-    public String branch() { return branch; }
-    public NodeFailure error() { return error; }
-    public Instant startedAt() { return startedAt; }
-    public Instant finishedAt() { return finishedAt; }
-    public List<NodeAttempt> attempts() { return List.copyOf(attempts); }
+    public String nodeId() {
+        return nodeId;
+    }
+
+    public String nodeType() {
+        return nodeType;
+    }
+
+    public NodeStatus status() {
+        return status;
+    }
+
+    public int attemptCount() {
+        return attemptCount;
+    }
+
+    public UUID currentAttemptId() {
+        return currentAttemptId;
+    }
+
+    public Instant availableAt() {
+        return availableAt;
+    }
+
+    public Instant leaseExpiresAt() {
+        return leaseExpiresAt;
+    }
+
+    public Instant resumeAt() {
+        return resumeAt;
+    }
+
+    public JsonNode input() {
+        return input;
+    }
+
+    public JsonNode output() {
+        return output;
+    }
+
+    public String branch() {
+        return branch;
+    }
+
+    public NodeFailure error() {
+        return error;
+    }
+
+    public Instant startedAt() {
+        return startedAt;
+    }
+
+    public Instant finishedAt() {
+        return finishedAt;
+    }
+
+    public List<NodeAttempt> attempts() {
+        return List.copyOf(attempts);
+    }
 }

@@ -79,14 +79,43 @@ public final class NodeAttempt {
         return status == Status.DISPATCHED || status == Status.RUNNING;
     }
 
-    public UUID attemptId() { return attemptId; }
-    public int number() { return number; }
-    public Status status() { return status; }
-    public Instant dispatchedAt() { return dispatchedAt; }
-    public Instant leaseExpiresAt() { return leaseExpiresAt; }
-    public Instant startedAt() { return startedAt; }
-    public Instant finishedAt() { return finishedAt; }
-    public String workerId() { return workerId; }
-    public String errorCode() { return errorCode; }
-    public String errorMessage() { return errorMessage; }
+    public UUID attemptId() {
+        return attemptId;
+    }
+
+    public int number() {
+        return number;
+    }
+
+    public Status status() {
+        return status;
+    }
+
+    public Instant dispatchedAt() {
+        return dispatchedAt;
+    }
+
+    public Instant leaseExpiresAt() {
+        return leaseExpiresAt;
+    }
+
+    public Instant startedAt() {
+        return startedAt;
+    }
+
+    public Instant finishedAt() {
+        return finishedAt;
+    }
+
+    public String workerId() {
+        return workerId;
+    }
+
+    public String errorCode() {
+        return errorCode;
+    }
+
+    public String errorMessage() {
+        return errorMessage;
+    }
 }

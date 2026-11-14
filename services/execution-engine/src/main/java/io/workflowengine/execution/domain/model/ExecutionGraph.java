@@ -57,14 +57,18 @@ public final class ExecutionGraph {
             try {
                 type = NodeType.valueOf(n.path("type").asText());
             } catch (IllegalArgumentException e) {
-                throw new InvalidWorkflowVersionException("Unknown node type " + n.path("type").asText());
+                throw new InvalidWorkflowVersionException(
+                        "Unknown node type " + n.path("type").asText());
             }
             Duration timeout = n.has("timeoutSeconds")
                     ? Duration.ofSeconds(n.get("timeoutSeconds").asLong())
                     : DEFAULT_NODE_TIMEOUT;
             JsonNode config = n.has("config") ? n.get("config") : JsonNodeFactory.instance.objectNode();
             String id = n.path("id").asText();
-            nodes.put(id, new GraphNode(id, type, n.path("name").asText(id), config, timeout, retryPolicy(n.get("retryPolicy"))));
+            nodes.put(
+                    id,
+                    new GraphNode(
+                            id, type, n.path("name").asText(id), config, timeout, retryPolicy(n.get("retryPolicy"))));
         }
         List<GraphEdge> edges = new ArrayList<>();
         for (JsonNode e : definition.path("edges")) {

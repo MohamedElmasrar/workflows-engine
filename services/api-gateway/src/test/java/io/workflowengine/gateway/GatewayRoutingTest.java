@@ -5,8 +5,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.sun.net.httpserver.HttpServer;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,7 +37,10 @@ class GatewayRoutingTest {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
             server.createContext("/", ex -> {
-                hits.put(name, ex.getRequestURI().getPath() + "|" + ex.getRequestHeaders().getFirst("X-Correlation-Id"));
+                hits.put(
+                        name,
+                        ex.getRequestURI().getPath() + "|"
+                                + ex.getRequestHeaders().getFirst("X-Correlation-Id"));
                 byte[] body = ("{\"service\":\"" + name + "\"}").getBytes(StandardCharsets.UTF_8);
                 ex.getResponseHeaders().add("Content-Type", "application/json");
                 ex.sendResponseHeaders(200, body.length);
@@ -60,9 +63,15 @@ class GatewayRoutingTest {
 
     @DynamicPropertySource
     static void upstreams(DynamicPropertyRegistry registry) {
-        registry.add("WORKFLOW_SERVICE_URL", () -> "http://127.0.0.1:" + workflow.getAddress().getPort());
-        registry.add("EXECUTION_ENGINE_URL", () -> "http://127.0.0.1:" + engine.getAddress().getPort());
-        registry.add("TRIGGER_SERVICE_URL", () -> "http://127.0.0.1:" + trigger.getAddress().getPort());
+        registry.add(
+                "WORKFLOW_SERVICE_URL",
+                () -> "http://127.0.0.1:" + workflow.getAddress().getPort());
+        registry.add(
+                "EXECUTION_ENGINE_URL",
+                () -> "http://127.0.0.1:" + engine.getAddress().getPort());
+        registry.add(
+                "TRIGGER_SERVICE_URL",
+                () -> "http://127.0.0.1:" + trigger.getAddress().getPort());
     }
 
     @TestConfiguration
@@ -71,7 +80,10 @@ class GatewayRoutingTest {
         @Bean
         ReactiveJwtDecoder jwtDecoder() {
             return token -> token.equals("valid")
-                    ? Mono.just(Jwt.withTokenValue(token).header("alg", "none").subject("alice").build())
+                    ? Mono.just(Jwt.withTokenValue(token)
+                            .header("alg", "none")
+                            .subject("alice")
+                            .build())
                     : Mono.error(new org.springframework.security.oauth2.jwt.BadJwtException("invalid"));
         }
 
@@ -108,27 +120,67 @@ class GatewayRoutingTest {
 
     @Test
     void routesEachPathToItsOwningService() {
-        get("/api/v1/workflows").expectStatus().isOk().expectBody().jsonPath("$.service").isEqualTo("workflow");
-        get("/api/v1/workflows/abc/executions").expectStatus().isOk().expectBody().jsonPath("$.service").isEqualTo("engine");
-        get("/api/v1/workflows/abc/triggers").expectStatus().isOk().expectBody().jsonPath("$.service").isEqualTo("trigger");
-        get("/api/v1/executions/123/events/stream").expectStatus().isOk().expectBody().jsonPath("$.service").isEqualTo("engine");
-        get("/api/v1/me").expectStatus().isOk().expectBody().jsonPath("$.service").isEqualTo("workflow");
+        get("/api/v1/workflows")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("workflow");
+        get("/api/v1/workflows/abc/executions")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("engine");
+        get("/api/v1/workflows/abc/triggers")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("trigger");
+        get("/api/v1/executions/123/events/stream")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("engine");
+        get("/api/v1/me")
+                .expectStatus()
+                .isOk()
+                .expectBody()
+                .jsonPath("$.service")
+                .isEqualTo("workflow");
     }
 
     @Test
     void rejectsMissingOrInvalidTokensButLetsWebhooksThrough() {
         client.get().uri("/api/v1/workflows").exchange().expectStatus().isUnauthorized();
-        client.get().uri("/api/v1/workflows").header("Authorization", "Bearer forged").exchange().expectStatus().isUnauthorized();
-        client.post().uri("/api/v1/webhooks/some-token").bodyValue("{}").header("Content-Type", "application/json")
-                .exchange().expectStatus().isOk();
+        client.get()
+                .uri("/api/v1/workflows")
+                .header("Authorization", "Bearer forged")
+                .exchange()
+                .expectStatus()
+                .isUnauthorized();
+        client.post()
+                .uri("/api/v1/webhooks/some-token")
+                .bodyValue("{}")
+                .header("Content-Type", "application/json")
+                .exchange()
+                .expectStatus()
+                .isOk();
         assertThat(hits.get("trigger")).startsWith("/api/v1/webhooks/some-token");
     }
 
     @Test
     void propagatesCorrelationIds() {
         get("/api/v1/workflows").expectHeader().exists("X-Correlation-Id");
-        client.get().uri("/api/v1/workflows").header("Authorization", "Bearer valid").header("X-Correlation-Id", "abc-123")
-                .exchange().expectHeader().valueEquals("X-Correlation-Id", "abc-123");
+        client.get()
+                .uri("/api/v1/workflows")
+                .header("Authorization", "Bearer valid")
+                .header("X-Correlation-Id", "abc-123")
+                .exchange()
+                .expectHeader()
+                .valueEquals("X-Correlation-Id", "abc-123");
         assertThat(hits.get("workflow")).endsWith("|abc-123");
     }
 
@@ -141,12 +193,15 @@ class GatewayRoutingTest {
         java.net.http.HttpClient http = java.net.http.HttpClient.newHttpClient();
         java.util.function.Function<String, java.net.http.HttpResponse<String>> preflight = origin -> {
             try {
-                return http.send(java.net.http.HttpRequest.newBuilder(java.net.URI.create("http://localhost:" + port + "/api/v1/workflows"))
-                        .method("OPTIONS", java.net.http.HttpRequest.BodyPublishers.noBody())
-                        .header("Origin", origin)
-                        .header("Access-Control-Request-Method", "PUT")
-                        .header("Access-Control-Request-Headers", "authorization,content-type")
-                        .build(), java.net.http.HttpResponse.BodyHandlers.ofString());
+                return http.send(
+                        java.net.http.HttpRequest.newBuilder(
+                                        java.net.URI.create("http://localhost:" + port + "/api/v1/workflows"))
+                                .method("OPTIONS", java.net.http.HttpRequest.BodyPublishers.noBody())
+                                .header("Origin", origin)
+                                .header("Access-Control-Request-Method", "PUT")
+                                .header("Access-Control-Request-Headers", "authorization,content-type")
+                                .build(),
+                        java.net.http.HttpResponse.BodyHandlers.ofString());
             } catch (Exception e) {
                 throw new IllegalStateException(e);
             }

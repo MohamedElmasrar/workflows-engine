@@ -103,7 +103,9 @@ public enum ConditionOperator {
         Optional<BigDecimal> r = number(right);
         if (l.isEmpty() || r.isEmpty()) {
             throw new NodeExecutionException(
-                    "TYPE_MISMATCH", "GREATER_THAN and LESS_THAN need numeric operands, got " + left + " and " + right, false);
+                    "TYPE_MISMATCH",
+                    "GREATER_THAN and LESS_THAN need numeric operands, got " + left + " and " + right,
+                    false);
         }
         return l.get().compareTo(r.get());
     }

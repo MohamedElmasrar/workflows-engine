@@ -95,7 +95,9 @@ public class WorkerConfiguration {
 
     @Bean
     NotificationChannel emailChannel(
-            JavaMailSender sender, CircuitBreakerRegistry registry, @Value("${worker.mail.from:workflows@example.com}") String from) {
+            JavaMailSender sender,
+            CircuitBreakerRegistry registry,
+            @Value("${worker.mail.from:workflows@example.com}") String from) {
         return new EmailNotificationChannel(sender, registry.circuitBreaker("smtp"), from);
     }
 
@@ -152,8 +154,17 @@ public class WorkerConfiguration {
     @Bean
     KafkaAdmin.NewTopics workerTopics(MessagingProperties p) {
         return new KafkaAdmin.NewTopics(
-                TopicBuilder.name(Topics.NODE_TASKS).partitions(p.getPartitions()).replicas(p.getReplicationFactor()).build(),
-                TopicBuilder.name(Topics.NODE_RESULTS).partitions(p.getPartitions()).replicas(p.getReplicationFactor()).build(),
-                TopicBuilder.name(Topics.deadLetter(Topics.NODE_TASKS)).partitions(p.getPartitions()).replicas(p.getReplicationFactor()).build());
+                TopicBuilder.name(Topics.NODE_TASKS)
+                        .partitions(p.getPartitions())
+                        .replicas(p.getReplicationFactor())
+                        .build(),
+                TopicBuilder.name(Topics.NODE_RESULTS)
+                        .partitions(p.getPartitions())
+                        .replicas(p.getReplicationFactor())
+                        .build(),
+                TopicBuilder.name(Topics.deadLetter(Topics.NODE_TASKS))
+                        .partitions(p.getPartitions())
+                        .replicas(p.getReplicationFactor())
+                        .build());
     }
 }

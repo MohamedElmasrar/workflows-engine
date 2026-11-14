@@ -1,0 +1,18 @@
+groups:
+  - name: workflow-platform
+    rules:
+      - alert: ServiceDown
+        expr: up{job="workflow-platform"} == 0
+        for: 1m
+        labels: { severity: critical }
+        annotations: { summary: "{{ $labels.instance }} is down" }
+      - alert: OutboxBacklog
+        expr: outbox_events_pending > 100
+        for: 5m
+        labels: { severity: warning }
+        annotations: { summary: "Outbox of {{ $labels.application }} is not draining (broker unavailable?)" }
+      - alert: HighExecutionFailureRate
+        expr: sum(rate(workflow_executions_finished_total{status=~"FAILED|TIMED_OUT"}[10m])) / clamp_min(sum(rate(workflow_executions_finished_total[10m])), 1e-9) > 0.2
+        for: 10m
+        labels: { severity: warning }
+        annotations: { summary: "More than 20% of executions fail" }

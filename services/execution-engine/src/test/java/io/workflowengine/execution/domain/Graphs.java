@@ -32,8 +32,12 @@ public final class Graphs {
     public Graphs retry(String id, int maxAttempts, long initialMs) {
         for (JsonNode n : nodes) {
             if (n.get("id").asText().equals(id)) {
-                ((ObjectNode) n).putObject("retryPolicy").put("maxAttempts", maxAttempts).put("initialIntervalMs", initialMs)
-                        .put("multiplier", 2).put("maxIntervalMs", 60000);
+                ((ObjectNode) n)
+                        .putObject("retryPolicy")
+                        .put("maxAttempts", maxAttempts)
+                        .put("initialIntervalMs", initialMs)
+                        .put("multiplier", 2)
+                        .put("maxIntervalMs", 60000);
             }
         }
         return this;
@@ -58,7 +62,8 @@ public final class Graphs {
     }
 
     public Graphs edge(String from, String to, String handle) {
-        ObjectNode e = edges.addObject().put("id", "e" + (++edge)).put("source", from).put("target", to);
+        ObjectNode e =
+                edges.addObject().put("id", "e" + (++edge)).put("source", from).put("target", to);
         if (handle != null) {
             e.put("sourceHandle", handle);
         }

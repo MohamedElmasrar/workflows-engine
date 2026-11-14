@@ -23,7 +23,8 @@ import org.springframework.stereotype.Repository;
 @Repository
 public class JdbcExecutionReadModel implements ExecutionReadModel {
 
-    private static final String SUMMARY_COLUMNS = """
+    private static final String SUMMARY_COLUMNS =
+            """
             e.id, e.workflow_id, e.workflow_name, e.workflow_version, e.status, e.trigger_type, e.triggered_by,
             e.created_at, e.started_at, e.finished_at, e.error_code, e.error_message, e.retry_of
             """;
@@ -57,7 +58,8 @@ public class JdbcExecutionReadModel implements ExecutionReadModel {
             where.append(" and e.created_at < ?");
             args.add(Timestamp.from(filter.to()));
         }
-        Long total = jdbc.queryForObject("select count(*) from workflow_execution e" + where, Long.class, args.toArray());
+        Long total =
+                jdbc.queryForObject("select count(*) from workflow_execution e" + where, Long.class, args.toArray());
         List<Object> pageArgs = new ArrayList<>(args);
         pageArgs.add(filter.size());
         pageArgs.add((long) filter.page() * filter.size());
@@ -107,7 +109,8 @@ public class JdbcExecutionReadModel implements ExecutionReadModel {
                        count(*) filter (where e.status = 'RUNNING'),
                        count(*) filter (where e.status = 'PENDING')
                 from workflow_execution e
-                """ + where,
+                """
+                        + where,
                 (rs, i) -> new Stats(rs.getLong(1), rs.getLong(2), rs.getLong(3), rs.getLong(4), rs.getLong(5)),
                 all.toArray());
     }
@@ -119,21 +122,24 @@ public class JdbcExecutionReadModel implements ExecutionReadModel {
         visibility(actor, where, args);
         args.add(limit);
         return jdbc.query(
-                "select " + SUMMARY_COLUMNS + " from workflow_execution e" + where + " order by e.created_at desc limit ?",
+                "select " + SUMMARY_COLUMNS + " from workflow_execution e" + where
+                        + " order by e.created_at desc limit ?",
                 JdbcExecutionReadModel::summary,
                 args.toArray());
     }
 
     @Override
     public Optional<String> status(UUID executionId) {
-        return jdbc.query("select status from workflow_execution where id = ?", (rs, i) -> rs.getString(1), executionId)
+        return jdbc
+                .query("select status from workflow_execution where id = ?", (rs, i) -> rs.getString(1), executionId)
                 .stream()
                 .findFirst();
     }
 
     private static void visibility(Actor actor, StringBuilder where, List<Object> args) {
         if (!actor.admin()) {
-            where.append(" and exists (select 1 from workflow_access a where a.workflow_id = e.workflow_id and a.user_id = ?)");
+            where.append(
+                    " and exists (select 1 from workflow_access a where a.workflow_id = e.workflow_id and a.user_id = ?)");
             args.add(actor.userId());
         }
     }

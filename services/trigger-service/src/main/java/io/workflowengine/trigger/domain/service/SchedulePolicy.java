@@ -29,7 +29,9 @@ public final class SchedulePolicy {
         ZonedDateTime base = after.atZone(ZoneId.of(timezone));
         ZonedDateTime next = nextAfter.apply(cron, base);
         // In a fall-back overlap the cron library matches the same wall-clock time again with the later offset.
-        while (next != null && next.toLocalDateTime().equals(base.toLocalDateTime()) && !next.getOffset().equals(base.getOffset())) {
+        while (next != null
+                && next.toLocalDateTime().equals(base.toLocalDateTime())
+                && !next.getOffset().equals(base.getOffset())) {
             next = nextAfter.apply(cron, next);
         }
         if (next == null) {

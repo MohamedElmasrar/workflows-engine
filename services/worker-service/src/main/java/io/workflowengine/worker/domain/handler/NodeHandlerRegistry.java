@@ -16,7 +16,8 @@ public final class NodeHandlerRegistry {
             NodeHandler previous = handlers.putIfAbsent(handler.supportedType(), handler);
             if (previous != null) {
                 throw new IllegalStateException("Two handlers registered for " + handler.supportedType() + ": "
-                        + previous.getClass().getSimpleName() + ", " + handler.getClass().getSimpleName());
+                        + previous.getClass().getSimpleName() + ", "
+                        + handler.getClass().getSimpleName());
             }
         }
     }

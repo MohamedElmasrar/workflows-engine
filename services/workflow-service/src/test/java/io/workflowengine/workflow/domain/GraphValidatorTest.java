@@ -56,8 +56,14 @@ class GraphValidatorTest {
 
     @Test
     void rejectsDanglingEdgesAndSelfLoops() {
-        assertThat(codes(definition().manualTrigger("t").edge("t", "ghost").build())).contains("DANGLING_EDGE");
-        assertThat(codes(definition().manualTrigger("t").log("a", "x").edge("t", "a").edge("a", "a").build()))
+        assertThat(codes(definition().manualTrigger("t").edge("t", "ghost").build()))
+                .contains("DANGLING_EDGE");
+        assertThat(codes(definition()
+                        .manualTrigger("t")
+                        .log("a", "x")
+                        .edge("t", "a")
+                        .edge("a", "a")
+                        .build()))
                 .contains("SELF_LOOP");
     }
 
@@ -81,8 +87,8 @@ class GraphValidatorTest {
 
     @Test
     void rejectsUnreachableNodes() {
-        ValidationResult result =
-                validator.validate(definition().manualTrigger("t").log("orphan", "x").build());
+        ValidationResult result = validator.validate(
+                definition().manualTrigger("t").log("orphan", "x").build());
         assertThat(result.errors())
                 .extracting(ValidationIssue::code, ValidationIssue::nodeId)
                 .contains(org.assertj.core.groups.Tuple.tuple("UNREACHABLE_NODE", "orphan"));
@@ -90,15 +96,30 @@ class GraphValidatorTest {
 
     @Test
     void rejectsEdgesIntoTrigger() {
-        assertThat(codes(definition().manualTrigger("t").log("a", "x").edge("t", "a").edge("a", "t").build()))
+        assertThat(codes(definition()
+                        .manualTrigger("t")
+                        .log("a", "x")
+                        .edge("t", "a")
+                        .edge("a", "t")
+                        .build()))
                 .contains("TRIGGER_HAS_INPUT");
     }
 
     @Test
     void branchHandlesOnlyOnConditionsAndConditionsRequireHandles() {
-        assertThat(codes(definition().manualTrigger("t").log("a", "x").edge("t", "a", "true").build()))
+        assertThat(codes(definition()
+                        .manualTrigger("t")
+                        .log("a", "x")
+                        .edge("t", "a", "true")
+                        .build()))
                 .contains("INVALID_BRANCH_HANDLE");
-        assertThat(codes(definition().manualTrigger("t").condition("c").log("a", "x").edge("t", "c").edge("c", "a").build()))
+        assertThat(codes(definition()
+                        .manualTrigger("t")
+                        .condition("c")
+                        .log("a", "x")
+                        .edge("t", "c")
+                        .edge("c", "a")
+                        .build()))
                 .contains("MISSING_BRANCH_HANDLE");
     }
 
@@ -147,6 +168,8 @@ class GraphValidatorTest {
     }
 
     private java.util.List<String> codes(io.workflowengine.workflow.domain.model.WorkflowDefinition definition) {
-        return validator.validate(definition).errors().stream().map(ValidationIssue::code).toList();
+        return validator.validate(definition).errors().stream()
+                .map(ValidationIssue::code)
+                .toList();
     }
 }

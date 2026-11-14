@@ -35,13 +35,16 @@ public class TriggerKafkaListeners {
                     WorkflowVersionPublished e = codec.payload(envelope, WorkflowVersionPublished.class);
                     registrations.onVersionPublished(envelope.eventId(), e.workflowId(), e.version(), e.definition());
                 }
-                case EventTypes.WORKFLOW_ARCHIVED -> registrations.onArchived(
-                        envelope.eventId(), codec.payload(envelope, WorkflowArchived.class).workflowId());
+                case EventTypes.WORKFLOW_ARCHIVED ->
+                    registrations.onArchived(
+                            envelope.eventId(),
+                            codec.payload(envelope, WorkflowArchived.class).workflowId());
                 case EventTypes.WORKFLOW_ACCESS_UPDATED -> {
                     WorkflowAccessUpdated e = codec.payload(envelope, WorkflowAccessUpdated.class);
                     Map<String, String> roles = new HashMap<>();
                     e.entries().forEach(entry -> roles.put(entry.userId(), entry.role()));
-                    registrations.onAccessUpdated(envelope.eventId(), e.workflowId(), e.ownerId(), e.aclRevision(), roles);
+                    registrations.onAccessUpdated(
+                            envelope.eventId(), e.workflowId(), e.ownerId(), e.aclRevision(), roles);
                 }
                 default -> {
                     // not relevant for triggers

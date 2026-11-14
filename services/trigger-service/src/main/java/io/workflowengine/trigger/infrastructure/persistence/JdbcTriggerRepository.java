@@ -37,18 +37,24 @@ public class JdbcTriggerRepository implements TriggerRepository {
                             trigger_kind = excluded.trigger_kind, updated_at = now()
                         where trigger_registration.workflow_version < excluded.workflow_version
                         """,
-                        workflowId, version, kind)
+                        workflowId,
+                        version,
+                        kind)
                 == 1;
     }
 
     @Override
     public Optional<WebhookEndpoint> webhookByTokenHash(String tokenHash) {
-        return jdbc.query("select * from webhook_registration where token_hash = ?", this::webhook, tokenHash).stream().findFirst();
+        return jdbc.query("select * from webhook_registration where token_hash = ?", this::webhook, tokenHash).stream()
+                .findFirst();
     }
 
     @Override
     public Optional<WebhookEndpoint> webhookByWorkflow(UUID workflowId) {
-        return jdbc.query("select * from webhook_registration where workflow_id = ?", this::webhook, workflowId).stream().findFirst();
+        return jdbc
+                .query("select * from webhook_registration where workflow_id = ?", this::webhook, workflowId)
+                .stream()
+                .findFirst();
     }
 
     @Override
@@ -62,13 +68,21 @@ public class JdbcTriggerRepository implements TriggerRepository {
                     secret_encrypted = excluded.secret_encrypted, require_signature = excluded.require_signature,
                     required_fields = excluded.required_fields, active = excluded.active, updated_at = now()
                 """,
-                w.id(), w.workflowId(), w.workflowVersion(), w.tokenHash(), w.encryptedToken(), w.encryptedSecret(),
-                w.requireSignature(), write(w.requiredFields()), w.active());
+                w.id(),
+                w.workflowId(),
+                w.workflowVersion(),
+                w.tokenHash(),
+                w.encryptedToken(),
+                w.encryptedSecret(),
+                w.requireSignature(),
+                write(w.requiredFields()),
+                w.active());
     }
 
     @Override
     public Optional<ScheduledTrigger> scheduleByWorkflow(UUID workflowId) {
-        return jdbc.query("select * from scheduled_trigger where workflow_id = ?", this::schedule, workflowId).stream().findFirst();
+        return jdbc.query("select * from scheduled_trigger where workflow_id = ?", this::schedule, workflowId).stream()
+                .findFirst();
     }
 
     @Override
@@ -82,8 +96,15 @@ public class JdbcTriggerRepository implements TriggerRepository {
                     timezone = excluded.timezone, payload = excluded.payload, next_fire_at = excluded.next_fire_at,
                     last_fired_at = excluded.last_fired_at, active = excluded.active, updated_at = now()
                 """,
-                s.id(), s.workflowId(), s.workflowVersion(), s.cron(), s.timezone(), write(s.payload()),
-                ts(s.nextFireAt()), ts(s.lastFiredAt()), s.active());
+                s.id(),
+                s.workflowId(),
+                s.workflowVersion(),
+                s.cron(),
+                s.timezone(),
+                write(s.payload()),
+                ts(s.nextFireAt()),
+                ts(s.lastFiredAt()),
+                s.active());
     }
 
     @Override
@@ -100,24 +121,38 @@ public class JdbcTriggerRepository implements TriggerRepository {
 
     @Override
     public void deactivateAll(UUID workflowId) {
-        jdbc.update("update webhook_registration set active = false, updated_at = now() where workflow_id = ?", workflowId);
-        jdbc.update("update scheduled_trigger set active = false, updated_at = now() where workflow_id = ?", workflowId);
+        jdbc.update(
+                "update webhook_registration set active = false, updated_at = now() where workflow_id = ?", workflowId);
+        jdbc.update(
+                "update scheduled_trigger set active = false, updated_at = now() where workflow_id = ?", workflowId);
     }
 
     private WebhookEndpoint webhook(ResultSet rs, int i) throws SQLException {
         List<String> fields = new ArrayList<>();
         read(rs.getString("required_fields")).forEach(f -> fields.add(f.asText()));
         return new WebhookEndpoint(
-                rs.getObject("id", UUID.class), rs.getObject("workflow_id", UUID.class), rs.getInt("workflow_version"),
-                rs.getString("token_hash"), rs.getString("token_encrypted"), rs.getString("secret_encrypted"),
-                rs.getBoolean("require_signature"), fields, rs.getBoolean("active"));
+                rs.getObject("id", UUID.class),
+                rs.getObject("workflow_id", UUID.class),
+                rs.getInt("workflow_version"),
+                rs.getString("token_hash"),
+                rs.getString("token_encrypted"),
+                rs.getString("secret_encrypted"),
+                rs.getBoolean("require_signature"),
+                fields,
+                rs.getBoolean("active"));
     }
 
     private ScheduledTrigger schedule(ResultSet rs, int i) throws SQLException {
         return new ScheduledTrigger(
-                rs.getObject("id", UUID.class), rs.getObject("workflow_id", UUID.class), rs.getInt("workflow_version"),
-                rs.getString("cron"), rs.getString("timezone"), read(rs.getString("payload")),
-                instant(rs.getTimestamp("next_fire_at")), instant(rs.getTimestamp("last_fired_at")), rs.getBoolean("active"));
+                rs.getObject("id", UUID.class),
+                rs.getObject("workflow_id", UUID.class),
+                rs.getInt("workflow_version"),
+                rs.getString("cron"),
+                rs.getString("timezone"),
+                read(rs.getString("payload")),
+                instant(rs.getTimestamp("next_fire_at")),
+                instant(rs.getTimestamp("last_fired_at")),
+                rs.getBoolean("active"));
     }
 
     private String write(Object value) {

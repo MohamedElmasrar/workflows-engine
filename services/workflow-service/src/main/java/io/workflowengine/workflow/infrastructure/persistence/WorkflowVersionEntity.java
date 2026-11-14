@@ -51,7 +51,12 @@ public class WorkflowVersionEntity {
     protected WorkflowVersionEntity() {}
 
     public WorkflowVersionEntity(
-            UUID workflowId, int version, String name, JsonNode definition, int schemaVersion, String publishedBy,
+            UUID workflowId,
+            int version,
+            String name,
+            JsonNode definition,
+            int schemaVersion,
+            String publishedBy,
             Instant publishedAt) {
         this.workflowId = workflowId;
         this.version = version;
@@ -62,10 +67,27 @@ public class WorkflowVersionEntity {
         this.publishedAt = publishedAt;
     }
 
-    public UUID getWorkflowId() { return workflowId; }
-    public int getVersion() { return version; }
-    public String getName() { return name; }
-    public JsonNode getDefinition() { return definition; }
-    public String getPublishedBy() { return publishedBy; }
-    public Instant getPublishedAt() { return publishedAt; }
+    public UUID getWorkflowId() {
+        return workflowId;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public JsonNode getDefinition() {
+        return definition;
+    }
+
+    public String getPublishedBy() {
+        return publishedBy;
+    }
+
+    public Instant getPublishedAt() {
+        return publishedAt;
+    }
 }

@@ -138,9 +138,22 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           exit-code: "0"   # report everything to code scanning; the gate is the next step
-      - name: Upload Trivy SARIF
+      - name: Keep Trivy SARIF as a build artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
+          retention-days: 14
+      - name: Upload Trivy SARIF to code scanning
+        # Optional: needs code scanning enabled for the repository (Settings > Code security; for private repositories
+        # GitHub Advanced Security). Set the repository variable CODE_SCANNING_ENABLED=true once it is enabled.
+        # Non-blocking either way: the vulnerability gate is the next step, and the SARIF is kept as an artifact.
         # Pull requests from forks get a read-only token and cannot write security events.
-        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        if: >-
+          always() && vars.CODE_SCANNING_ENABLED == 'true' &&
+          (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        continue-on-error: true
         uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-results.sarif

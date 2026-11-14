@@ -7,7 +7,7 @@ target/
 .DS_Store
 node_modules/
 .next/
-out/
+/apps/web/out/
 coverage/
 playwright-report/
 test-results/

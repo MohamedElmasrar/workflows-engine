@@ -1,5 +1,32 @@
 # Workflow Automation Platform
 
+[![Java](https://img.shields.io/badge/Java-21-ED8B00.svg?style=flat&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F.svg?style=flat&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
+[![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-2025.0-6DB33F.svg?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud-gateway)
+[![Spring Security](https://img.shields.io/badge/Spring%20Security-OAuth2%20resource%20server-6DB33F.svg?style=flat&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
+[![Hibernate](https://img.shields.io/badge/Hibernate-6.6-59666C.svg?style=flat&logo=hibernate&logoColor=white)](https://hibernate.org/orm/)
+[![Flyway](https://img.shields.io/badge/Flyway-migrations-CC0200.svg?style=flat&logo=flyway&logoColor=white)](https://flywaydb.org)
+[![Resilience4j](https://img.shields.io/badge/Resilience4j-circuit%20breaker-0B7BBE.svg?style=flat)](https://resilience4j.readme.io)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-336791.svg?style=flat&logo=postgresql&logoColor=white)](https://www.postgresql.org)
+[![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-4.1%20KRaft-231F20.svg?style=flat&logo=apachekafka&logoColor=white)](https://kafka.apache.org)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg?style=flat&logo=redis&logoColor=white)](https://redis.io)
+[![Keycloak](https://img.shields.io/badge/Keycloak-26-4D4D4D.svg?style=flat&logo=keycloak&logoColor=white)](https://www.keycloak.org)
+[![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://react.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-4-06B6D4.svg?style=flat&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
+[![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-components-000000.svg?style=flat&logo=shadcnui&logoColor=white)](https://ui.shadcn.com)
+[![React Flow](https://img.shields.io/badge/React%20Flow-12-FF0072.svg?style=flat)](https://reactflow.dev)
+[![TanStack Query](https://img.shields.io/badge/TanStack%20Query-5-FF4154.svg?style=flat&logo=reactquery&logoColor=white)](https://tanstack.com/query)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED.svg?style=flat&logo=docker&logoColor=white)](https://docs.docker.com/compose/)
+[![Kubernetes](https://img.shields.io/badge/Kubernetes-Helm-326CE5.svg?style=flat&logo=kubernetes&logoColor=white)](https://helm.sh)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF.svg?style=flat&logo=githubactions&logoColor=white)](https://docs.github.com/actions)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-tracing-425CC7.svg?style=flat&logo=opentelemetry&logoColor=white)](https://opentelemetry.io)
+[![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C.svg?style=flat&logo=prometheus&logoColor=white)](https://prometheus.io)
+[![Grafana](https://img.shields.io/badge/Grafana-dashboards-F46800.svg?style=flat&logo=grafana&logoColor=white)](https://grafana.com)
+[![Testcontainers](https://img.shields.io/badge/Testcontainers-integration%20tests-291A3F.svg?style=flat)](https://testcontainers.com)
+[![Playwright](https://img.shields.io/badge/Playwright-e2e-2EAD33.svg?style=flat)](https://playwright.dev)
+
 A distributed workflow automation system: design workflows visually, publish immutable versions, trigger them
 manually, by signed webhook or on a cron schedule, and watch them run on distributed workers with durable state,
 retries, timeouts and crash recovery.
@@ -123,7 +150,7 @@ scripts/load-test.py 200 20      # throughput/latency measurement (see docs/perf
 ```
 
 Last full run: 253 backend tests (unit, ArchUnit, contract, Testcontainers integration), 78 frontend unit tests and
-2 Playwright journeys passed. Measured performance: [docs/performance.md](docs/performance.md).
+2 Playwright journeys passed, against Docker Compose and against a kind cluster deployed with the Helm chart. Measured performance: [docs/performance.md](docs/performance.md).
 
 ## Deployment
 
@@ -144,8 +171,7 @@ Last full run: 253 backend tests (unit, ArchUnit, contract, Testcontainers integ
   version-not-available` for a moment (the UI retries).
 * No credential store yet (header values live in the definition); no mTLS between services; single-broker Kafka and
   single PostgreSQL in development.
-* Operational procedures: [docs/runbooks/operations.md](docs/runbooks/operations.md). Progress and open items:
-  [IMPLEMENTATION_STATUS.md](IMPLEMENTATION_STATUS.md).
+* Operational procedures: [docs/runbooks/operations.md](docs/runbooks/operations.md).
 
 ## Troubleshooting
 

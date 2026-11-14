@@ -31,10 +31,13 @@ public class OutboxEffectPublisher implements ExecutionEffectPublisher {
             switch (effect) {
                 case ExecutionEffect.DispatchNode dispatch -> {
                     NodeTask t = dispatch.task();
+                    // keyed by execution and node: parallel branches spread over partitions (and workers), while all
+                    // attempts of one node stay ordered on one partition
                     outbox.append(
                             Topics.NODE_TASKS,
                             EventTypes.NODE_EXECUTION_SCHEDULED,
                             key,
+                            key + ":" + t.nodeId(),
                             new NodeExecutionScheduled(
                                     t.executionId(), t.workflowId(), t.nodeId(), t.nodeType().name(), t.attemptId(),
                                     t.attemptNumber(), t.timeoutMs(), t.config()));

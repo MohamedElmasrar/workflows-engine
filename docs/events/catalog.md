@@ -1,7 +1,7 @@
 # Event Catalog
 
 All events use the envelope defined in `packages/contracts` (`EventEnvelope`), serialized as JSON.
-Kafka record key = `aggregateId`. Headers: `traceparent` (W3C), `x-correlation-id`, `x-event-type`.
+Kafka record key = `aggregateId`, except node tasks which use `executionId:nodeId` so that parallel nodes of one execution can be processed by different workers while attempts of a node stay ordered. Headers: `traceparent` (W3C), `x-correlation-id`, `x-event-type`.
 Payload JSON Schemas live in `packages/contracts/src/main/resources/schemas/events/` and are verified by contract tests.
 
 Rules:
@@ -14,7 +14,7 @@ Rules:
 |---|---|---|---|---|
 | `workflow.events.v1` | workflow-service | workflowId | `WorkflowAccessUpdated`, `WorkflowVersionPublished`, `WorkflowArchived` | execution-engine, trigger-service |
 | `execution.requests.v1` | trigger-service | workflowId | `WorkflowExecutionRequested` | execution-engine |
-| `execution.node-tasks.v1` | execution-engine | executionId | `NodeExecutionScheduled` | worker-service |
+| `execution.node-tasks.v1` | execution-engine | executionId:nodeId | `NodeExecutionScheduled` | worker-service |
 | `execution.node-results.v1` | worker-service | executionId | `NodeExecutionStarted`, `NodeExecutionCompleted`, `NodeExecutionFailed` | execution-engine |
 | `execution.lifecycle.v1` | execution-engine | executionId | `WorkflowExecutionStarted`, `WorkflowExecutionCompleted`, `WorkflowExecutionFailed`, `WorkflowExecutionCancelled`, `WorkflowExecutionTimedOut` | trigger-service (delivery status) |
 | `<topic>.dlt` | consumer of `<topic>` | original | original record + `kafka_dlt-*` headers | operators (see runbook) |

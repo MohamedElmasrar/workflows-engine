@@ -31,6 +31,12 @@ public class OutboxWriter {
 
     @Transactional(propagation = Propagation.MANDATORY)
     public EventEnvelope append(String topic, String eventType, String aggregateId, Object payload) {
+        return append(topic, eventType, aggregateId, aggregateId, payload);
+    }
+
+    /** Variant with an explicit Kafka record key, for topics partitioned by something other than the aggregate. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public EventEnvelope append(String topic, String eventType, String aggregateId, String messageKey, Object payload) {
         EventEnvelope envelope = codec.envelope(
                 eventType, aggregateId, payload, MessageContext.correlationId(), MessageContext.causationId());
         Map<String, String> headers = traceContext.capture();
@@ -41,7 +47,7 @@ public class OutboxWriter {
                 """,
                 envelope.eventId(),
                 topic,
-                aggregateId,
+                messageKey,
                 eventType,
                 codec.write(envelope),
                 toJson(headers));

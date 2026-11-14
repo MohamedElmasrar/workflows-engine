@@ -135,6 +135,11 @@ public class PlatformSupportAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
+        @ConditionalOnClass(
+                name = {
+                    "jakarta.validation.ConstraintViolationException",
+                    "org.springframework.security.access.AccessDeniedException"
+                })
         ProblemDetailsAdvice problemDetailsAdvice() {
             return new ProblemDetailsAdvice();
         }

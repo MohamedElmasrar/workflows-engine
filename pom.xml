@@ -21,7 +21,7 @@
     <modules>
         <module>packages/contracts</module>
         <module>packages/platform-support</module>
-        <!--<module>services/api-gateway</module>-->
+        <module>services/api-gateway</module>
         <module>services/workflow-service</module>
         <module>services/execution-engine</module>
         <module>services/worker-service</module>

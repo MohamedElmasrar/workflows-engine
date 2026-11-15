@@ -90,7 +90,7 @@ describe("WorkflowListPage", () => {
   });
 
   it("shows the problem detail and correlation id on errors", async () => {
-    const { ApiError } = await import("@/lib/api/client");
+    const { ApiError } = await import("@/lib/api/api-error");
     listWorkflows.mockRejectedValue(new ApiError({ status: 403, title: "Forbidden", detail: "Nope", correlationId: "corr-42" }));
     renderPage();
     expect(await screen.findByText("Nope")).toBeInTheDocument();

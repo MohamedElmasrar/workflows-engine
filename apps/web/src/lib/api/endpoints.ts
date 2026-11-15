@@ -1,4 +1,4 @@
-import { apiFetch } from "./client";
+import { apiFetch } from "@/lib/api/client";
 import type { ExecutionListParams, WorkflowListParams } from "./query-keys";
 import type {
   Execution,

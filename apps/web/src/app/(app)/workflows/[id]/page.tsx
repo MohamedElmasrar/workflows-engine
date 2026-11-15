@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { Suspense } from "react";
-import { LoadingState } from "@/components/states";
+import { LoadingState } from "@/components/loading-state";
 import { WorkflowEditorPage } from "@/features/editor/editor-page";
 
 export default function Page() {

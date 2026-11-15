@@ -11,7 +11,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { CorrelationId } from "@/components/states";
+import { CorrelationId } from "@/components/correlation-id";
 
 export function ConflictDialog({
   open,

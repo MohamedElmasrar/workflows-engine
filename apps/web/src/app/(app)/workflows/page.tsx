@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LoadingState } from "@/components/states";
+import { LoadingState } from "@/components/loading-state";
 import { WorkflowListPage } from "@/features/workflows/workflow-list-page";
 
 export const metadata: Metadata = { title: "Workflows" };

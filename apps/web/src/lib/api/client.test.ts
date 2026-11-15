@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setSessionHandlers } from "@/lib/auth/session";
-import { ApiError, apiFetch, toApiError } from "./client";
+import { ApiError, toApiError } from "./api-error";
+import { apiFetch } from "./client";
 
 function jsonResponse(status: number, body: unknown, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), { status, headers: { "content-type": "application/problem+json", ...headers } });

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { backoffDelay, connectSse, createSseParser, type SseMessage } from "./sse";
+import { backoffDelay, connectSse } from "./connect";
+import { createSseParser, type SseMessage } from "./parser";
 
 function collect() {
   const messages: SseMessage[] = [];

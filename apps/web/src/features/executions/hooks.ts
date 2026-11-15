@@ -7,7 +7,7 @@ import { api } from "@/lib/api/endpoints";
 import { queryKeys, type ExecutionListParams } from "@/lib/api/query-keys";
 import { isTerminalExecution, type Execution, type HistoryEntry } from "@/lib/api/types";
 import { getAccessToken, notifyUnauthorized } from "@/lib/auth/session";
-import { connectSse } from "@/lib/sse";
+import { connectSse } from "@/lib/sse/connect";
 
 export function useExecutionList(params: ExecutionListParams) {
   return useQuery({

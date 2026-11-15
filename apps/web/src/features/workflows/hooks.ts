@@ -2,7 +2,7 @@
 
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api/endpoints";
-import { ApiError, isApiError } from "@/lib/api/client";
+import { ApiError, isApiError } from "@/lib/api/api-error";
 import { queryKeys, type WorkflowListParams } from "@/lib/api/query-keys";
 import type { Execution, Workflow, WorkflowDefinition, WorkflowRole } from "@/lib/api/types";
 

@@ -8,12 +8,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { RelativeTime } from "@/components/relative-time";
-import { describeError, ErrorState, LoadingState } from "@/components/states";
+import { describeError } from "@/components/describe-error";
+import { ErrorState } from "@/components/error-state";
+import { LoadingState } from "@/components/loading-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { isApiError } from "@/lib/api/client";
+import { isApiError } from "@/lib/api/api-error";
 import { humanize } from "@/lib/format";
 import { useGrantPermission, usePermissions, useRevokePermission } from "@/features/workflows/hooks";
 

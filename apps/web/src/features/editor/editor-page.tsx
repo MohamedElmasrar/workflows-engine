@@ -21,7 +21,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ExecutionStatusBadge, WorkflowStatusBadge } from "@/components/status-badge";
-import { describeError, ErrorState, LoadingState } from "@/components/states";
+import { describeError } from "@/components/describe-error";
+import { ErrorState } from "@/components/error-state";
+import { LoadingState } from "@/components/loading-state";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -32,7 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Switch } from "@/components/ui/switch";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { isApiError } from "@/lib/api/client";
+import { isApiError } from "@/lib/api/api-error";
 import { isTriggerType, type NodeStatus, type ValidationIssue } from "@/lib/api/types";
 import { humanize } from "@/lib/format";
 import { usePreferences } from "@/lib/preferences";

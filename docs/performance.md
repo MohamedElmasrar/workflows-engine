@@ -1,6 +1,6 @@
-# Performance Measurements
+# Performance
 
-Measured with `scripts/load-test.py` against the Docker Compose environment on the development machine
+I wanted real numbers instead of guesses, so I measured with `scripts/load-test.py` against the Docker Compose stack on my laptop
 (12 CPU threads, 15 GiB RAM, all services and infrastructure on the same host, one replica each, 6 partitions,
 worker concurrency 3). Workflow: Manual trigger → Transform → Condition → Log (three worker tasks per execution).
 The gateway's execution-start rate limit was raised for the run (`EXECUTION_START_RATE=500`), all other settings default.
@@ -19,4 +19,5 @@ End-to-end = execution `createdAt` to `finishedAt`. Observations:
   partition count) and a higher `WORKER_CONCURRENCY` are the first levers.
 * All 220 executions of both runs reached COMPLETED; none failed or stayed pending.
 
-These numbers describe this single-host setup only and are not a capacity claim for a production deployment.
+These numbers are from one laptop running everything at once. They show where the time goes, not what the system
+could do on real infrastructure.

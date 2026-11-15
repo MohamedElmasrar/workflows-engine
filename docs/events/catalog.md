@@ -17,7 +17,7 @@ Rules:
 | `execution.node-tasks.v1` | execution-engine | executionId:nodeId | `NodeExecutionScheduled` | worker-service |
 | `execution.node-results.v1` | worker-service | executionId | `NodeExecutionStarted`, `NodeExecutionCompleted`, `NodeExecutionFailed` | execution-engine |
 | `execution.lifecycle.v1` | execution-engine | executionId | `WorkflowExecutionStarted`, `WorkflowExecutionCompleted`, `WorkflowExecutionFailed`, `WorkflowExecutionCancelled`, `WorkflowExecutionTimedOut` | trigger-service (delivery status) |
-| `<topic>.dlt` | consumer of `<topic>` | original | original record + `kafka_dlt-*` headers | operators (see runbook) |
+| `<topic>.dlt` | consumer of `<topic>` | original | original record + `kafka_dlt-*` headers | me, with `scripts/dlt.sh` (see [operations](../runbooks/operations.md)) |
 
 ## Payloads (version 1)
 

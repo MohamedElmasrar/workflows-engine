@@ -1,8 +1,10 @@
-# Development dependencies for kind (DEVELOPMENT ONLY)
+# Development dependencies for kind
+
+Only for my local cluster.
 
 Single-replica PostgreSQL 17, Kafka 4.1.2 (KRaft), Redis 7, Keycloak 26.4 (start-dev + realm import), Mailpit,
 WireMock and an OpenTelemetry collector, mirroring `compose.yaml`. Default credentials, no HA, no backups, no
-persistence guarantees. Production uses managed services instead (see `docs/runbooks/kubernetes.md`).
+persistence guarantees. A real deployment would use managed services instead.
 
 ```bash
 kubectl kustomize --load-restrictor LoadRestrictionsNone infrastructure/kubernetes/dev-dependencies \

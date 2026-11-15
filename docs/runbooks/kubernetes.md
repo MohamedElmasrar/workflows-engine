@@ -1,5 +1,8 @@
 # Runbook: Kubernetes deployment
 
+How I deploy the project on a local kind cluster with the Helm chart. I ran through these steps end to end;
+the smoke test and the Playwright tests pass on the cluster.
+
 Covers a local deployment on [kind](https://kind.sigs.k8s.io/) and notes for production.
 
 | Path | Content |
@@ -159,98 +162,15 @@ so Helm sees nothing to update.
 
 Clean up: `helm -n workflow-platform uninstall workflow-platform` and `kind delete cluster --name workflow-platform`.
 
-## 2. Production notes
+## 2. If I ever deploy it for real
 
-### 2.1 Dependencies
+The chart is written so it could run on a real cluster, but I've only run it on kind. Things I would change first:
 
-Do not use `dev-dependencies` in production.
+* use managed PostgreSQL, Kafka (3 brokers, replication factor 3) and Redis instead of `dev-dependencies`;
+* run Keycloak in production mode with TLS and remove the `workflow-cli` password-grant client and demo users;
+* create the Secrets from a secret store and generate a real `TRIGGER_ENCRYPTION_KEY`;
+* enable the Ingress with a TLS certificate and set `CORS_ALLOWED_ORIGINS` and `PUBLIC_BASE_URL`;
+* keep Flyway migrations backward compatible, because old and new pods share the database during a rolling update.
 
-* **PostgreSQL:** use a managed service (RDS, Cloud SQL, Azure Database). Keep one database and one role per
-  service (`workflow`, `execution`, `trigger`), use TLS (`?sslmode=require` or `verify-full` in `DB_URL`), and
-  enable backups with point-in-time recovery. Size `max_connections` for
-  replicas × Hikari pool: execution-engine 20, workflow-service 10, trigger-service 10.
-  For example, 3 engine replicas use 60 connections. Add PgBouncer if needed.
-* **Kafka:** use a managed service (MSK, Confluent Cloud, Aiven) or Strimzi, with at least 3 brokers.
-  Keep `PLATFORM_MESSAGING_REPLICATION_FACTOR=3`, `min.insync.replicas=2` and automatic topic creation off. The
-  services create their topics with `PLATFORM_MESSAGING_PARTITIONS` partitions, but only when a topic does not
-  exist yet. Set TLS and SASL through Spring properties as env vars, for example
-  `SPRING_KAFKA_PROPERTIES_SECURITY_PROTOCOL` in `config` and `SPRING_KAFKA_PROPERTIES_SASL_JAAS_CONFIG` through
-  `secretEnv`.
-* **Redis:** use a managed service with a password (`SPRING_DATA_REDIS_PASSWORD` through `secretEnv`) and TLS
-  (`SPRING_DATA_REDIS_SSL_ENABLED=true`). Redis holds only rate-limit buckets and the worker attempt cache (24 h).
-* **Keycloak:** run it in production mode (`start`) with its own database, a real hostname and TLS. Set
-  `OIDC_ISSUER` to its public realm URL. `OIDC_JWKS_URI` may be an internal URL.
-* **SMTP:** set `SMTP_HOST` / `SMTP_PORT` and pass the credentials through `secretEnv`.
-
-### 2.2 Secrets
-
-Never commit secret values. Create the Secrets named in `secrets.example.yaml` from a secret store, for example
-with the External Secrets Operator (`ExternalSecret` → `workflow-platform-db`, `workflow-platform-trigger`), Vault,
-Sealed Secrets or a cloud CSI driver. Generate `TRIGGER_ENCRYPTION_KEY` with `openssl rand -base64 32`. Changing
-this key makes the stored webhook signing secrets unreadable, so rotate the webhook secrets along with it.
-The pods do not mount a service account token (`automountServiceAccountToken: false`).
-
-### 2.3 Ingress and TLS
-
-Set `ingress.enabled=true`, `ingress.host` and `ingress.className`. Create the `ingress.tls.secretName` certificate
-with cert-manager (for example with an annotation `cert-manager.io/cluster-issuer: <issuer>`). The routes are
-`/api` → api-gateway and `/` → web. Actuator endpoints are not routed. The default nginx annotations turn off
-response buffering and raise the read timeout for the execution event stream (SSE). Adjust them for other
-controllers. If the web app serves its own `/api/*` routes, change `ingress.paths`. Set `CORS_ALLOWED_ORIGINS` and
-`PUBLIC_BASE_URL` to the public origin.
-
-Images on GHCR are private by default. Add a pull secret (`imagePullSecrets`) or make the packages public.
-
-### 2.4 Scaling
-
-* **Kafka partitions cap consumers.** Each topic has 6 partitions, and a consumer group gets at most one active
-  consumer per partition. For the execution-engine (`SPRING_KAFKA_LISTENER_CONCURRENCY`) and the worker-service
-  (`WORKER_CONCURRENCY`), keep `maxReplicas × concurrency ≤ partitions`. The defaults are 3 × 2 = 6. To scale
-  further, add partitions first (`kafka-topics.sh --alter --partitions N`). Partitions can never be reduced, and
-  adding them changes the key-to-partition mapping for new messages.
-* The HPAs (engine and worker, CPU at 70 %) scale down slowly (300 s window, 1 pod per 2 min), because every scale
-  event rebalances the consumer group. For queue-driven scaling, use KEDA on consumer lag
-  (`kafka_consumer_fetch_manager_records_lag`).
-* api-gateway, workflow-service and trigger-service are stateless HTTP services. Scale their replicas manually.
-  Trigger schedules (`FOR UPDATE SKIP LOCKED`) and the outbox publishers (PostgreSQL advisory lock) are safe with
-  several replicas.
-* PDBs (`minAvailable: 1`) protect the gateway, engine and worker during node drains. Run at least 2 replicas,
-  otherwise a drain blocks.
-* Memory: the heap is 75 % of the container limit (`-XX:MaxRAMPercentage=75`). Raise the limit rather than the
-  percentage.
-
-### 2.5 Observability
-
-The pods carry `prometheus.io/scrape|path|port` annotations. With the Prometheus Operator, add a PodMonitor that
-selects `app.kubernetes.io/part-of=workflow-platform` and scrapes path `/actuator/prometheus` on port `http`. The
-Grafana dashboards in `infrastructure/observability/grafana/dashboards` filter by the `application` label, which
-the services add themselves, so they work unchanged. The chart turns on histogram buckets for HTTP server
-requests and Kafka listeners, which the p95 panels need. Port the alert rules from
-`infrastructure/observability/prometheus/alerts.yml`. The `ServiceDown` rule uses the compose job name, so adjust
-it. Point `OTLP_TRACES_ENDPOINT` at your collector.
-
-### 2.6 Deploy, upgrade and rollback
-
-`release.yml` publishes `ghcr.io/<owner>/<repo>/<component>` tagged `sha-<commit>`, the branch name and, for `v*`
-tags, the semver tags. It then deploys `main` to the `staging` environment when the environment has a `KUBECONFIG`
-secret. Optional values go in `HELM_VALUES_STAGING`. To deploy by hand:
-
-```bash
-helm upgrade --install workflow-platform infrastructure/helm/workflow-platform -n workflow-platform \
-  -f my-values.yaml --set image.registry=ghcr.io/<owner>/<repo> --set image.tag=1.4.0 \
-  --rollback-on-failure --wait --timeout 10m     # Helm 3: --atomic instead of --rollback-on-failure
-helm -n workflow-platform history workflow-platform
-helm -n workflow-platform rollback workflow-platform <revision> --wait
-```
-
-* Rolling updates use `maxUnavailable: 0`. Shutdown works like this: the `preStop` hook sleeps 10 s so endpoints
-  are removed, then Spring shuts down gracefully (up to 30 s, 60 s for the worker). The termination grace period
-  covers both steps.
-* **Database migrations are not rolled back.** Flyway migrates on startup, and during a rolling update old and new
-  pods run against the same schema. Migrations must therefore be backward compatible (expand, then contract in a
-  later release). Before a rollback across a migration, check that the old version still works with the new
-  schema.
-* Event contracts are versioned (`*.v1` topics). Consumers must accept the events of both the old and the new
-  version during a rollout.
-* Configuration changes roll the pods automatically (`checksum/config` annotation). Changes to a Secret do not:
-  run `kubectl rollout restart`.
+`release.yml` already publishes the images to GHCR and can run `helm upgrade` against a `staging` environment if a
+`KUBECONFIG` secret is set.

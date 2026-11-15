@@ -1,13 +1,13 @@
 # Architecture Overview
 
-This document is the reference for service boundaries, the execution model, contracts and failure handling.
-Decisions and their trade-offs are recorded in [`docs/adr`](../adr).
+How the pieces fit together: service boundaries, the execution model, the event contracts and what happens when
+things fail. The reasoning behind the bigger choices is in [design-decisions.md](../design-decisions.md).
 
 ## 1. System context (C4 level 1)
 
 ```mermaid
 flowchart LR
-  user("<b>Workflow Author / Operator</b><br/>Browser Client")
+  user("<b>Workflow Author</b><br/>Browser Client")
   platform["<b>Workflow Automation Platform</b><br/>DAG Design & Durable Execution"]
 
   subgraph external ["External Systems"]
@@ -69,7 +69,7 @@ flowchart LR
 | **trigger-service** (8084) | Webhook and cron trigger registrations, trigger deliveries | Postgres `trigger`, Kafka (consumes workflow events, produces execution requests via outbox) |
 | **web** (3000) | Visual editor, monitoring UI | Gateway, Keycloak |
 
-No service reads another service's database. Cross-service data is obtained from events (event-carried state transfer, see ADR-0010).
+No service reads another service's database. Cross-service data is obtained from events (event-carried state transfer, see [design decisions](../design-decisions.md#services-keep-local-copies-instead-of-calling-each-other)).
 
 ## 3. Bounded contexts
 
@@ -79,7 +79,7 @@ No service reads another service's database. Cross-service data is obtained from
 * **Triggering** (trigger-service): turning external stimuli (webhooks, time) into execution requests. Holds projections of published trigger configuration and ACLs.
 * **Identity** (Keycloak): users, realm roles `ADMIN`, `USER`.
 
-Manual execution is a user command, so it is served by the execution engine directly (`POST /api/v1/workflows/{id}/executions`) rather than relayed through the trigger service. See ADR-0011.
+Manual execution is a user command, so it is served by the execution engine directly (`POST /api/v1/workflows/{id}/executions`) rather than relayed through the trigger service. See [design decisions](../design-decisions.md#manual-runs-go-straight-to-the-engine).
 
 ## 4. Workflow definition model (schema version 1)
 

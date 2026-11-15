@@ -1,4 +1,7 @@
-# Security Model
+# Security
+
+Even as a personal project, a workflow engine is a nice target: it runs user-defined HTTP calls and accepts
+webhooks from the internet. These are the threats I thought about and what I did about each.
 
 ## Trust boundaries
 
@@ -66,6 +69,6 @@ See [overview § 9](overview.md#9-limits-defaults-configurable). Request bodies 
 * Service-to-service traffic inside the cluster is not mutually authenticated (no mTLS); Kafka has no ACLs in the
   development setup.
 * Dev Keycloak runs `start-dev` over HTTP with demo users; the `workflow-cli` password-grant client is for local
-  scripts only and must be removed in production.
+  scripts only and should not exist in a real deployment.
 * Audit logging is limited to the persisted execution history and structured application logs (who published, who
   ran, who cancelled is recorded in `published_by`, `triggered_by` and cancellation history entries).

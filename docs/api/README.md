@@ -1,4 +1,6 @@
-# Public REST API (v1)
+# REST API (v1)
+
+Reference for the API the web app uses; handy with `curl` too (see `scripts/lib.sh`).
 
 All endpoints are served through the gateway at `http://localhost:8080`. Every `/api/**` call except webhooks needs
 `Authorization: Bearer <access token>` issued by Keycloak realm `workflow-platform` (audience `workflow-api`).

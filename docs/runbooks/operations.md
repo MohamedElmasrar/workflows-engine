@@ -1,4 +1,6 @@
-# Operational Runbooks (Docker Compose environment)
+# When something breaks
+
+Notes to myself for debugging the Docker Compose stack.
 
 Commands assume the repository root. For Kubernetes see [kubernetes.md](kubernetes.md); replace
 `docker compose exec <svc>` with `kubectl exec deploy/<svc>`.

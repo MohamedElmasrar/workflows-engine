@@ -1,4 +1,7 @@
-# Demonstration Guide
+# Demo guide
+
+How I show the project: first the happy path, then I break things on purpose and show that every run still ends
+correctly.
 
 Prerequisites: Docker with Compose v2, `curl`, `jq`, `openssl`, Python 3. About 6 GB of free memory.
 
@@ -33,7 +36,7 @@ E-mails appear in Mailpit at http://localhost:8025.
 scripts/demo-failure-recovery.sh
 ```
 
-Recorded run (2026-11-14, this machine):
+What happened when I ran it (2026-11-14, on my laptop):
 
 | Scenario | What the script does | Observed |
 |---|---|---|

@@ -1,4 +1,4 @@
-# Workflow Automation Platform
+# Workflow Engine
 
 [![Java](https://img.shields.io/badge/Java-21-ED8B00.svg?style=flat&logo=openjdk&logoColor=white)](https://openjdk.org/projects/jdk/21/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F.svg?style=flat&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -13,6 +13,7 @@
 [![Apache Kafka](https://img.shields.io/badge/Apache%20Kafka-4.1%20KRaft-231F20.svg?style=flat&logo=apachekafka&logoColor=white)](https://kafka.apache.org)
 [![Redis](https://img.shields.io/badge/Redis-7-DC382D.svg?style=flat&logo=redis&logoColor=white)](https://redis.io)
 [![Keycloak](https://img.shields.io/badge/Keycloak-26-4D4D4D.svg?style=flat&logo=keycloak&logoColor=white)](https://www.keycloak.org)
+[![Node.js](https://img.shields.io/badge/Node.js-24+-5FA04E.svg?style=flat&logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000.svg?style=flat&logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg?style=flat&logo=react&logoColor=black)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
@@ -27,15 +28,36 @@
 [![Prometheus](https://img.shields.io/badge/Prometheus-metrics-E6522C.svg?style=flat&logo=prometheus&logoColor=white)](https://prometheus.io)
 [![Grafana](https://img.shields.io/badge/Grafana-dashboards-F46800.svg?style=flat&logo=grafana&logoColor=white)](https://grafana.com)
 [![Testcontainers](https://img.shields.io/badge/Testcontainers-integration%20tests-291A3F.svg?style=flat)](https://testcontainers.com)
-[![Playwright](https://img.shields.io/badge/Playwright-e2e-2EAD33.svg?style=flat)](https://playwright.dev)
+[![Vitest](https://img.shields.io/badge/Vitest-5-6E9F18.svg?style=flat&logo=vitest&logoColor=white)](https://vitest.dev)
+[![Playwright](https://img.shields.io/badge/Playwright-1.65-2EAD33.svg?style=flat)](https://playwright.dev)
 
-A distributed workflow automation system: design workflows visually, publish immutable versions, trigger them
-manually, by signed webhook or on a cron schedule, and watch them run on distributed workers with durable state,
-retries, timeouts and crash recovery.
+A personal project: a small workflow automation platform in the spirit of n8n, with Temporal-style durable
+execution underneath. You draw a workflow in the browser, publish it, and trigger it by hand, with a signed webhook,
+or on a cron schedule. The steps run on separate workers through Kafka, and you can watch every step live.
+
+I built it to get hands-on with the hard parts of distributed systems, not just talk about them: durable state
+machines, the transactional outbox, idempotent consumers, task leases, crash recovery, and tracing a request across
+services and Kafka. Everything runs locally with Docker Compose.
 
 ![Workflow editor](docs/screenshots/editor.png)
 
-## Architecture
+## What it can do
+
+* **Visual editor.** Drag nodes from a palette, connect them, configure each node in a side panel. Conditions
+  have `true` and `false` outputs. Auto-layout, validation with the broken nodes highlighted, version history,
+  sharing with other users.
+* **Nine node types.** Manual, Webhook and Schedule triggers; HTTP Request, Transform, Log, Notification (e-mail or
+  log), Condition, and Delay (up to 7 days, survives restarts).
+* **Passing data between steps.** `{{ trigger.body.orderId }}` or `{{ nodes.score.output.body.score }}` in any
+  text field. These are plain property paths; no user code is ever executed.
+* **Live monitoring.** The execution page updates over Server-Sent Events: graph colours, a timeline, and each
+  node's input, output, attempts and errors. Reconnecting replays what you missed. Runs can be cancelled or retried.
+* **Failure handling.** Retries with exponential back-off, timeouts, re-dispatch when a worker disappears,
+  dead-letter topics, and protection against duplicate messages.
+* **Observability.** JSON logs with trace and correlation ids, Prometheus metrics, Grafana dashboards, and Jaeger
+  traces that follow one webhook through all services.
+
+## How it's put together
 
 ```mermaid
 flowchart LR
@@ -54,43 +76,20 @@ flowchart LR
   browser -. OIDC PKCE .-> kc[Keycloak]
 ```
 
-| Service | Responsibility |
+| Part | What it does |
 |---|---|
-| `services/api-gateway` | Spring Cloud Gateway: routing, JWT pre-validation, Redis rate limiting, CORS, correlation ids |
-| `services/workflow-service` | Drafts, JSON-schema + graph validation, immutable versions, sharing (OWNER/EDITOR/VIEWER) |
-| `services/execution-engine` | Durable execution and node state machines, DAG scheduling, retries, leases, timeouts, cancellation, SSE |
-| `services/worker-service` | Node handlers (HTTP Request with SSRF protection, Condition, Transform, Log, Notification) |
-| `services/trigger-service` | Webhook endpoints (token + HMAC + replay protection), cron schedules, trigger deliveries |
-| `apps/web` | Dashboard, workflow list, visual editor, live execution monitoring, history, settings |
-| `packages/contracts` | Event envelope, event payload records, versioned JSON schemas (+ contract tests) |
-| `packages/platform-support` | Transactional outbox, idempotent consumer store, Kafka DLT handling, correlation ids, Problem Details |
+| `services/api-gateway` | Routing, token check, rate limiting, CORS, correlation ids |
+| `services/workflow-service` | Drafts, validation, immutable published versions, sharing |
+| `services/execution-engine` | The durable state machines, scheduling, retries, leases, timeouts, live updates |
+| `services/worker-service` | Runs the nodes (HTTP with SSRF protection, condition, transform, log, notification) |
+| `services/trigger-service` | Webhook endpoints (HMAC signatures, replay protection) and cron schedules |
+| `apps/web` | The web app |
+| `packages/contracts` | Shared event formats and JSON schemas |
+| `packages/platform-support` | Outbox, duplicate detection, Kafka dead-lettering, error responses |
 
-Details: [architecture overview](docs/architecture/overview.md) (C4 context/containers, state machines, join
-semantics, reliability, failure scenarios, limits), [engine components](docs/architecture/execution-engine-components.md),
-[security model](docs/architecture/security.md), [event catalog](docs/events/catalog.md), [REST API](docs/api/README.md),
-[ADRs](docs/adr/README.md).
-
-## Technology
-
-Java 21, Spring Boot 3.5, Spring Security (OAuth2 resource server), Spring Data JPA/Hibernate, Lombok, Flyway, Spring Kafka,
-Spring Cloud Gateway 2025.0, Resilience4j, Micrometer + OpenTelemetry, PostgreSQL 17, Apache Kafka 4.1 (KRaft),
-Redis 7, Keycloak 26. Next.js 16, React 19, TypeScript (strict), Tailwind, shadcn/ui, React Flow 12, TanStack Query,
-Zustand, React Hook Form + Zod. Docker Compose, Helm, GitHub Actions, Prometheus, Grafana, OTel Collector, Jaeger.
-Tests: JUnit 5, AssertJ, Mockito, Testcontainers, ArchUnit, Vitest, React Testing Library, Playwright.
-
-## Features
-
-* Visual editor: drag-and-drop or click-to-add palette, typed node forms, condition branches (`true`/`false`
-  handles), auto layout, validation with node highlighting, versions, sharing, trigger settings, last-run overlay.
-* Nine node types: Manual / Webhook / Schedule triggers, HTTP Request, Transform, Log, Notification (e-mail or log),
-  Condition, Delay (durable timer, up to 7 days).
-* Templates `{{ trigger.body.x }}`, `{{ nodes.<id>.output.<path> }}` resolved by the engine; no code execution.
-* Execution monitoring: live graph, timeline and node details (inputs, outputs, attempts, errors) over SSE with
-  reconnect/replay from persisted history; cancel and retry.
-* Reliability: transactional outbox, idempotent consumers, attempt fencing, task leases, exponential back-off retries,
-  dead-letter topics, optimistic locking, execution timeouts, per-workflow concurrency limits.
-* Observability: JSON (ECS) logs with trace and correlation ids, Prometheus metrics, traces across HTTP and Kafka,
-  provisioned Grafana dashboards.
+If you want the details: [architecture](docs/architecture/overview.md) (state machines, join rules, failure
+scenarios), [why I chose what I chose](docs/design-decisions.md), [security](docs/architecture/security.md),
+[REST API](docs/api/README.md), [events](docs/events/catalog.md).
 
 ## Screenshots
 
@@ -98,90 +97,83 @@ Tests: JUnit 5, AssertJ, Mockito, Testcontainers, ArchUnit, Vitest, React Testin
 |---|---|---|
 | ![](docs/screenshots/dashboard.png) | ![](docs/screenshots/executions.png) | ![](docs/screenshots/execution-detail.png) |
 
-## Getting started
+## Running it
 
-Requirements: Docker with Compose v2 (about 6 GB free memory). For the scripts: `curl`, `jq`, `openssl`, Python 3.
-For building outside Docker: JDK 21 and Node 20.
+You need Docker with Compose v2 and roughly 6 GB of free memory. The helper scripts also use `curl`, `jq`, `openssl`
+and Python 3. To build outside Docker: JDK 21+ and Node 24+. The code targets Java 21; the
+Docker images build with JDK 24 and run on Java 25 and Node 26.
 
 ```bash
-docker compose up -d --build                    # whole platform (first build takes a few minutes)
+docker compose up -d --build                    # first build takes a few minutes
 docker compose --profile observability up -d    # optional: Jaeger, Prometheus, Grafana
-scripts/smoke-test.sh                           # end-to-end check of the demo workflow
+scripts/smoke-test.sh                           # creates the demo workflow and runs it twice
 ```
 
 | URL | What | Login |
 |---|---|---|
-| http://localhost:3000 | Web app | `demo`/`demo`, `alice`/`alice`, `bob`/`bob`, `admin`/`admin` (ADMIN) |
+| http://localhost:3000 | Web app | `demo`/`demo` (also `alice`, `bob`, and `admin` as admin; password = username) |
 | http://localhost:8080 | API gateway | Bearer token |
-| http://localhost:8180 | Keycloak | admin console `admin`/`admin` |
-| http://localhost:8025 | Mailpit (notification e-mails) | – |
-| http://localhost:16686 / :9090 / :3001 | Jaeger / Prometheus / Grafana | Grafana `admin`/`admin` |
-| http://localhost:8081-8084/swagger-ui.html | OpenAPI of each service | – |
+| http://localhost:8180 | Keycloak | `admin`/`admin` |
+| http://localhost:8025 | Mailpit, catches the notification e-mails | – |
+| http://localhost:16686, :9090, :3001 | Jaeger, Prometheus, Grafana | Grafana `admin`/`admin` |
+| http://localhost:8081-8084/swagger-ui.html | OpenAPI page of each service | – |
 
-### Configuration
-
-Defaults are development values set in `compose.yaml`. Relevant overrides (environment variables):
+All passwords and keys in `compose.yaml` are local development values. The ones you might want to change:
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `TRIGGER_ENCRYPTION_KEY` | dev-only key | Base64 32-byte AES key for webhook tokens/secrets (`openssl rand -base64 32`) |
-| `ENGINE_LEASE_GRACE` | `60s` | Time after a node timeout before an unanswered task is re-dispatched |
-| `WORKER_HTTP_ALLOWED_HOSTS` | `mock-api` | Hosts trusted to resolve to private addresses (administrator setting) |
-| `EXECUTION_START_RATE` / `_BURST` | `5` / `20` | Manual starts per user and second at the gateway |
-| `POSTGRES_PASSWORD`, `KEYCLOAK_ADMIN_PASSWORD`, `GRAFANA_ADMIN_PASSWORD` | dev values | – |
+| `TRIGGER_ENCRYPTION_KEY` | dev key | AES key for stored webhook secrets (`openssl rand -base64 32`) |
+| `ENGINE_LEASE_GRACE` | `60s` | How long after a node's timeout the engine gives up on a worker and re-dispatches |
+| `WORKER_HTTP_ALLOWED_HOSTS` | `mock-api` | Hosts allowed to resolve to private addresses |
+| `EXECUTION_START_RATE` / `_BURST` | `5` / `20` | Manual starts per user per second |
 
-Services read `DB_URL`, `KAFKA_BOOTSTRAP`, `OIDC_ISSUER`, `OIDC_JWKS_URI`, `OTLP_TRACES_ENDPOINT` and others; see each
-`services/*/src/main/resources/application.yml`.
+## The demo workflow
 
-## Example workflow
+`scripts/order-webhook-demo.json` is what `smoke-test.sh` uses. A signed webhook receives an order, a Transform node
+shapes it, an HTTP Request asks a (mock) fraud API for a score, and a Condition sends high-risk orders to the fraud
+team and confirms the rest to the customer by e-mail.
 
-`scripts/order-webhook-demo.json`: a signed webhook receives an order; Transform shapes it; HTTP Request calls a fraud
-API; Condition checks `score > 70`; the `true` branch e-mails the fraud team, the `false` branch confirms to the
-customer. Walkthrough and failure demonstrations (worker crash, engine crash, duplicate events) with recorded results:
-[docs/demo-guide.md](docs/demo-guide.md).
+`scripts/demo-failure-recovery.sh` then breaks things on purpose: it kills a worker in the middle of an HTTP call,
+kills the engine during a delay, and replays a Kafka message. All three runs still end correctly.
+[docs/demo-guide.md](docs/demo-guide.md) walks through both, with the results I got.
 
 ## Tests
 
 ```bash
-./mvnw verify -DskipITs          # unit + ArchUnit + contract tests (no Docker needed)
-./mvnw verify                    # + integration tests with Testcontainers (PostgreSQL, Kafka, Redis)
+./mvnw verify -DskipITs          # unit, architecture and contract tests (no Docker needed)
+./mvnw verify                    # plus integration tests against real PostgreSQL, Kafka and Redis (Testcontainers)
 cd apps/web && npm ci && npm run lint && npm run typecheck && npm test
-cd apps/web && npx playwright install chromium && npm run test:e2e   # needs the compose stack and web on :3000
-scripts/demo-failure-recovery.sh # crash and duplicate-message scenarios against the running stack
-scripts/load-test.py 200 20      # throughput/latency measurement (see docs/performance.md)
+cd apps/web && npx playwright install chromium && npm run test:e2e   # needs the Compose stack running
+scripts/load-test.py 200 20      # throughput and latency, results in docs/performance.md
 ```
 
-Last full run: 253 backend tests (unit, ArchUnit, contract, Testcontainers integration), 78 frontend unit tests and
-2 Playwright journeys passed, against Docker Compose and against a kind cluster deployed with the Helm chart. Measured performance: [docs/performance.md](docs/performance.md).
+Last full run: 253 backend tests, 78 frontend unit tests and 2 Playwright journeys, all passing, both on Docker
+Compose and on a local kind cluster.
 
-## Deployment
+## Kubernetes and CI
 
-* Kubernetes: Helm chart `infrastructure/helm/workflow-platform` (+ `values-kind.yaml`) and development dependencies in
-  `infrastructure/kubernetes/dev-dependencies`; step-by-step guide for kind in
-  [docs/runbooks/kubernetes.md](docs/runbooks/kubernetes.md).
-* CI/CD: `.github/workflows/ci.yml` (format check, build, unit/architecture tests, integration tests, frontend lint/
-  types/tests/build, Trivy and dependency review, Helm lint + kubeconform, image builds) and `release.yml`
-  (tests, then image publication to GHCR with SBOM/provenance, then an optional Helm deploy to `staging`).
+I also wrote a Helm chart (`infrastructure/helm/workflow-platform`) and tested it on a local kind cluster; the steps
+are in [docs/runbooks/kubernetes.md](docs/runbooks/kubernetes.md). GitHub Actions builds and tests everything on each
+push (`.github/workflows/ci.yml`) and publishes images to GHCR from `main` (`release.yml`).
 
-## Guarantees and limitations
+## Limitations
 
-* Execution state transitions are applied at most once per node attempt; message delivery is at least once. Node
-  handlers may run more than once after crashes, so external side effects can repeat; HTTP Request nodes send an
-  `Idempotency-Key` header (`<executionId>:<nodeId>`) that cooperating APIs can use.
-* Only DAGs (no loops). One trigger per workflow.
-* Projections are eventually consistent: immediately after publishing, starting a run can return `409
-  version-not-available` for a moment (the UI retries).
-* No credential store yet (header values live in the definition); no mTLS between services; single-broker Kafka and
-  single PostgreSQL in development.
-* Operational procedures: [docs/runbooks/operations.md](docs/runbooks/operations.md).
+* Messages are delivered at least once. State changes are safe, but if a worker crashes mid-call an HTTP request can
+  be sent twice. HTTP nodes send an `Idempotency-Key` header for APIs that support it.
+* Only acyclic graphs, and one trigger per workflow.
+* Right after publishing, starting a run can return `409 version-not-available` for a moment; the UI retries.
+* No credential store: an API key typed into an HTTP header is saved as part of the workflow.
+* Cancelling doesn't interrupt a step that is already running on a worker; its result is just ignored.
+* Single Kafka broker and single PostgreSQL. It runs on my laptop, not in production.
 
-## Troubleshooting
+## When something goes wrong
 
-* **A service is unhealthy after `up`**: `docker compose logs <service>`; most often Keycloak or Kafka were still
-  starting, run `docker compose up -d` again.
-* **Login loops or 401 everywhere**: tokens must be issued by `http://localhost:8180`; open the app on
-  `localhost:3000` (not `127.0.0.1`).
-* **`409 version-not-available` when running right after publishing**: wait a second and retry.
-* **HTTP node fails with `DESTINATION_BLOCKED`**: the URL resolves to a private address; only hosts in
+* **A container isn't healthy after `up`:** check `docker compose logs <service>`. Usually Keycloak or Kafka were
+  still starting; run `docker compose up -d` again.
+* **Login loops or 401 everywhere:** open the app on `localhost:3000`, not `127.0.0.1`. Tokens must come from
+  `localhost:8180`.
+* **HTTP node fails with `DESTINATION_BLOCKED`:** the URL points to a private address. Only hosts in
   `WORKER_HTTP_ALLOWED_HOSTS` may do that.
-* **Port already in use**: the stack binds 3000, 5432, 6379, 8025, 8080-8084, 8089, 8180, 9094.
+* **Port already in use:** the stack uses 3000, 5432, 6379, 8025, 8080-8084, 8089, 8180 and 9094.
+
+More in [docs/runbooks/operations.md](docs/runbooks/operations.md).

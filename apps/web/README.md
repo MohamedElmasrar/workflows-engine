@@ -1,11 +1,13 @@
 # Web app
 
-Browser UI for the workflow platform: dashboard, workflow list, visual editor (React Flow), execution
+The web app for the project: dashboard, workflow list, visual editor (React Flow), execution
 monitoring with live updates, execution history and settings. Every screen talks to the real API gateway.
 
 Stack: Next.js 16 (App Router, Turbopack) · React 19 · TypeScript (strict) · Tailwind CSS 4 · shadcn/ui (Radix) ·
 `@xyflow/react` 12 · TanStack Query 5 · Zustand 5 · React Hook Form 7 + Zod 4 · keycloak-js 26 · `@dagrejs/dagre` ·
-Vitest + Testing Library · Playwright.
+Vitest 5 + Testing Library · Playwright · ESLint 10.
+
+Node 24 or newer is required (Vitest 5 and jsdom 31 no longer support Node 20); the Docker image uses `node:26-alpine`.
 
 ## Quick start
 
@@ -114,7 +116,7 @@ docker build -t workflow-platform/web:dev apps/web \
 docker run -p 3000:3000 workflow-platform/web:dev
 ```
 
-Multi-stage on `node:20-alpine`, runs as the non-root `nextjs` user, health check `wget http://127.0.0.1:3000/healthz`.
+Multi-stage on `node:26-alpine`, runs as the non-root `nextjs` user, health check `wget http://127.0.0.1:3000/healthz`.
 
 ## Known limitations
 

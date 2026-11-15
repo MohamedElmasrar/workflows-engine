@@ -44,26 +44,37 @@ All values are public and inlined at build time (`NEXT_PUBLIC_*`); for Docker th
 
 ## Structure
 
+Each file has one job and a one-line header comment saying what it is. Files stay under 300 lines
+(`components/ui/` excluded). Features follow the same layout: `<feature>-page.tsx` at the top, then
+`components/`, `hooks/` and `lib/` (pure helpers). Imports point at the file that defines a symbol; the only
+index files are `lib/api/types/` and `schemas/node-forms/`.
+
 ```
 src/
-  app/                    thin routes: (app)/dashboard, workflows, workflows/[id], executions, executions/[id], settings; /healthz
-  components/             app shell (sidebar + top bar), status badges, JSON viewer, states, confirm dialog, pagination, relative time
-  components/ui/          shadcn/ui components (generated with the shadcn CLI)
+  app/                       thin routes: (app)/dashboard, workflows, workflows/[id], executions, executions/[id], settings; /healthz
+  components/                app shell, status badges, JSON viewer, empty/error/loading states, confirm dialog, pagination, relative time
+  components/ui/             shadcn/ui components (generated with the shadcn CLI)
   features/
-    dashboard/            stats cards + recent activity
-    workflows/            list page, create dialog, TanStack Query hooks for workflows/versions/triggers/permissions
-    editor/               editor page, canvas, palette, custom nodes, side panel, config forms, sheets/dialogs,
-                          flow-mapping.ts (definitionToFlow / flowToDefinition), auto-layout.ts (dagre)
-    executions/           list + detail pages, read-only graph, node run details, live hooks (SSE)
-    settings/             account, preferences, trigger overview
+    dashboard/               page + stat card + recent activity card
+    workflows/
+      workflow-list-page.tsx
+      components/            create dialog, filters, table, sort header, row actions
+      hooks/                 workflow queries, mutations, start execution (retries 409 after publish), list URL params, row actions
+    editor/                  see features/editor/README.md
+    executions/
+      execution-list-page.tsx, execution-detail-page.tsx
+      components/            filters, table, header (cancel/retry), timeline, live indicator, read-only graph, node run details
+      hooks/                 execution queries, cancel/retry mutations, use-live-execution (history + SSE)
+      lib/                   datetime-local conversion, timeline detail formatting
+    settings/                page + account, preferences and trigger overview cards
   lib/
-    api/                  apiFetch + ApiError (RFC 9457), endpoint functions, domain types, query keys
-    auth/                 Keycloak init, AuthProvider, session bridge (token getter for non-React code)
-    sse.ts                SSE-over-fetch parser and reconnecting client
-    preferences.ts        localStorage UI preferences (no secrets)
-  schemas/                Zod mirrors of workflow-definition.v1.json + form schemas/converters
-  stores/editor-store.ts  Zustand store for the editable draft
-e2e/                      Playwright specs
+    api/                     client.ts (apiFetch), api-error.ts (RFC 9457), endpoints.ts, query-keys.ts, types/ (domain types)
+    auth/                    Keycloak init, AuthProvider, session bridge (token getter for non-React code)
+    sse/                     parser.ts (text/event-stream parser), connect.ts (reconnecting fetch client)
+    preferences.ts           localStorage UI preferences (no secrets)
+  schemas/                   node-configs.ts (Zod mirror of workflow-definition.v1.json), node-forms/ (form schemas + converters)
+  stores/editor/             Zustand store for the editable draft: types, state helpers, pure graph rules, the store
+e2e/                         Playwright specs
 ```
 
 ## Authentication
@@ -79,7 +90,7 @@ Every request carries `X-Correlation-Id`; error UIs show the correlation id retu
 
 ## Live execution updates (SSE)
 
-`EventSource` cannot send `Authorization`, so `src/lib/sse.ts` reads `text/event-stream` with `fetch` and a
+`EventSource` cannot send `Authorization`, so `src/lib/sse/` reads `text/event-stream` with `fetch` and a
 `ReadableStream`. The parser handles `id:`, `event:`, `data:` (multi-line), `retry:`, comments and chunk boundaries
 (including split CRLF). `connectSse` reconnects with exponential backoff (500 ms doubling, max 15 s) and sends
 `Last-Event-ID` with the last sequence seen, so the backend replays exactly the missed transitions. 401/403/404 stop

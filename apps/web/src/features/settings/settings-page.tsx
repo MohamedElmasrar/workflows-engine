@@ -19,7 +19,7 @@ import { api } from "@/lib/api/endpoints";
 import { queryKeys } from "@/lib/api/query-keys";
 import { useAuth } from "@/lib/auth/auth-provider";
 import { usePreferences, type Preferences } from "@/lib/preferences";
-import { useWorkflowList } from "@/features/workflows/hooks";
+import { useWorkflowList } from "@/features/workflows/hooks/workflow-queries";
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (

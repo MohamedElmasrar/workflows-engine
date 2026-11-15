@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { isTriggerType } from "@/lib/api/types";
 import { useEditorStore } from "@/stores/editor/editor-store";
-import { useWorkflow } from "@/features/workflows/hooks";
+import { useWorkflow } from "@/features/workflows/hooks/workflow-queries";
 import { useEditorActions } from "../hooks/use-editor-actions";
 import { useEditorShortcuts } from "../hooks/use-editor-shortcuts";
 import { useLastRun } from "../hooks/use-last-run";

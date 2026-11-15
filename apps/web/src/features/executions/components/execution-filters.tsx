@@ -4,7 +4,7 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useWorkflowList } from "@/features/workflows/hooks";
+import { useWorkflowList } from "@/features/workflows/hooks/workflow-queries";
 import { EXECUTION_STATUSES } from "@/lib/api/types";
 import { humanize } from "@/lib/format";
 import { useUrlState } from "@/lib/url-state";

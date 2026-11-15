@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
 import { Button } from "@/components/ui/button";
-import { useWorkflow } from "@/features/workflows/hooks";
+import { useWorkflow } from "@/features/workflows/hooks/workflow-queries";
 import { isApiError } from "@/lib/api/api-error";
 import { resetEditorStore, useEditorStore } from "@/stores/editor/editor-store";
 import { EditorWorkspace } from "./components/editor-workspace";

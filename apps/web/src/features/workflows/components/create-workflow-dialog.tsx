@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createWorkflowSchema, type CreateWorkflowForm } from "@/schemas/node-forms";
-import { useCreateWorkflow } from "./hooks";
+import { useCreateWorkflow } from "../hooks/workflow-mutations";
 
 export function CreateWorkflowDialog() {
   const [open, setOpen] = useState(false);

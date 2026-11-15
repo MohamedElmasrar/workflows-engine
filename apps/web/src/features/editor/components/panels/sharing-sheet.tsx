@@ -17,7 +17,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { isApiError } from "@/lib/api/api-error";
 import { humanize } from "@/lib/format";
-import { useGrantPermission, usePermissions, useRevokePermission } from "@/features/workflows/hooks";
+import { useGrantPermission, useRevokePermission } from "@/features/workflows/hooks/workflow-mutations";
+import { usePermissions } from "@/features/workflows/hooks/workflow-queries";
 
 const shareSchema = z.object({
   username: z.string().trim().min(1, "Username is required").max(100),

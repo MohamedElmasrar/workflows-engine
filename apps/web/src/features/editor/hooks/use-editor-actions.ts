@@ -8,7 +8,8 @@ import { describeError } from "@/components/describe-error";
 import { isApiError } from "@/lib/api/api-error";
 import type { ValidationIssue } from "@/lib/api/types";
 import { useEditorStore } from "@/stores/editor/editor-store";
-import { usePublishWorkflow, useSaveWorkflow, useValidateWorkflow, useWorkflow } from "@/features/workflows/hooks";
+import { usePublishWorkflow, useSaveWorkflow, useValidateWorkflow } from "@/features/workflows/hooks/workflow-mutations";
+import { useWorkflow } from "@/features/workflows/hooks/workflow-queries";
 
 export interface ValidationView {
   valid: boolean;

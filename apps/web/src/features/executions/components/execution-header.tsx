@@ -10,7 +10,7 @@ import { describeError } from "@/components/describe-error";
 import { RelativeTime } from "@/components/relative-time";
 import { ExecutionStatusBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
-import { useWorkflow } from "@/features/workflows/hooks";
+import { useWorkflow } from "@/features/workflows/hooks/workflow-queries";
 import { isApiError } from "@/lib/api/api-error";
 import type { Execution } from "@/lib/api/types";
 import { formatDuration, humanize } from "@/lib/format";

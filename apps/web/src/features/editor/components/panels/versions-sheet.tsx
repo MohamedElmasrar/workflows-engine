@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ExecutionGraph } from "@/features/executions/components/execution-graph";
-import { useWorkflowVersion, useWorkflowVersions } from "@/features/workflows/hooks";
+import { useWorkflowVersion, useWorkflowVersions } from "@/features/workflows/hooks/workflow-queries";
 import { useEditorStore } from "@/stores/editor/editor-store";
 
 export function VersionsSheet({ workflowId, open, onOpenChange }: { workflowId: string; open: boolean; onOpenChange: (open: boolean) => void }) {

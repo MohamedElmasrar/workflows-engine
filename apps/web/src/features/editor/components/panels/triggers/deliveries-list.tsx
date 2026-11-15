@@ -5,7 +5,7 @@ import { ErrorState } from "@/components/error-state";
 import { LoadingState } from "@/components/loading-state";
 import { RelativeTime } from "@/components/relative-time";
 import { Button } from "@/components/ui/button";
-import { useDeliveries } from "@/features/workflows/hooks";
+import { useDeliveries } from "@/features/workflows/hooks/workflow-queries";
 import { humanize } from "@/lib/format";
 
 export function DeliveriesList({ workflowId, enabled }: { workflowId: string; enabled: boolean }) {

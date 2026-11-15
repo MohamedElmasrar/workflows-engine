@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { newCorrelationId } from "@/lib/api/client";
-import { useStartExecution } from "@/features/workflows/hooks";
+import { useStartExecution } from "@/features/workflows/hooks/use-start-execution";
 
 const runSchema = z.object({
   input: z.string().refine((text) => {

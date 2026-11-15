@@ -11,10 +11,11 @@ import { isTriggerType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { basicsFromForm, basicsToForm, nodeBasicsFormSchema, type NodeBasicsForm } from "@/schemas/node-forms";
 import { useEditorStore } from "@/stores/editor/editor-store";
-import { InputField, useLiveSync } from "./config-forms/form-fields";
-import { TypeConfigForm } from "./config-forms/type-forms";
-import type { WorkflowFlowNode } from "./flow-types";
-import { NODE_CATALOG } from "./node-catalog";
+import { InputField } from "@/features/editor/components/config-forms/fields/input-field";
+import { useLiveSync } from "@/features/editor/components/config-forms/hooks/use-live-sync";
+import { TypeConfigForm } from "@/features/editor/components/config-forms/forms/type-config-form";
+import type { WorkflowFlowNode } from "../lib/flow-types";
+import { NODE_CATALOG } from "../lib/node-catalog";
 import { TemplateHelp } from "./template-help";
 
 function NodeBasics({ node, disabled }: { node: WorkflowFlowNode; disabled: boolean }) {

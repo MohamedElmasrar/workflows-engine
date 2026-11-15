@@ -3,9 +3,9 @@
  * what the user is editing. Graph rules live in ./graph-rules, helpers in ./state-helpers.
  */
 import { create } from "zustand";
-import { computeLayout } from "@/features/editor/auto-layout";
-import { definitionToFlow, flowToDefinition, toFlowEdge } from "@/features/editor/flow-mapping";
-import type { WorkflowNodeData } from "@/features/editor/flow-types";
+import { computeLayout } from "@/features/editor/lib/auto-layout";
+import { definitionToFlow, flowToDefinition, toFlowEdge } from "@/features/editor/lib/flow-mapping";
+import type { WorkflowNodeData } from "@/features/editor/lib/flow-types";
 import { isTriggerType } from "@/lib/api/types";
 import { applyEdgeChangeEvents, applyNodeChangeEvents, checkConnection, convertTrigger, createNode } from "./graph-rules";
 import { applySelection, edited, INITIAL_DATA } from "./state-helpers";

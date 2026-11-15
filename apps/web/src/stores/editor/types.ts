@@ -1,6 +1,6 @@
 /** Shape of the editor store: the editable draft (graph + workflow meta), selection, dirty tracking. */
 import type { Connection, EdgeChange, NodeChange } from "@xyflow/react";
-import type { WorkflowFlowEdge, WorkflowFlowNode, WorkflowNodeData } from "@/features/editor/flow-types";
+import type { WorkflowFlowEdge, WorkflowFlowNode, WorkflowNodeData } from "@/features/editor/lib/flow-types";
 import type {
   NodeType,
   Position,

@@ -4,9 +4,10 @@ import { Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowP
 import { useMemo } from "react";
 import type { NodeExecution, NodeStatus, WorkflowDefinition } from "@/lib/api/types";
 import { usePreferences } from "@/lib/preferences";
-import { definitionToFlow } from "@/features/editor/flow-mapping";
-import type { WorkflowFlowNode } from "@/features/editor/flow-types";
-import { GraphDecorationsContext, nodeTypes, type GraphDecorations } from "@/features/editor/nodes/workflow-nodes";
+import { definitionToFlow } from "@/features/editor/lib/flow-mapping";
+import type { WorkflowFlowNode } from "@/features/editor/lib/flow-types";
+import { GraphDecorationsContext, type GraphDecorations } from "@/features/editor/components/nodes/graph-decorations";
+import { nodeTypes } from "@/features/editor/components/nodes/node-types";
 
 /** Classifies edges: active (taken), inactive (not taken), or pending. */
 export function edgeState(

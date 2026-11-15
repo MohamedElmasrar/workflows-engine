@@ -9,10 +9,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { isTriggerType, type NodeType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editor/editor-store";
-import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "./auto-layout";
+import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "../lib/auto-layout";
 import { DND_MIME } from "./editor-canvas";
-import type { WorkflowFlowNode } from "./flow-types";
-import { NODE_CATALOG, PALETTE_GROUPS } from "./node-catalog";
+import type { WorkflowFlowNode } from "../lib/flow-types";
+import { NODE_CATALOG, PALETTE_GROUPS } from "../lib/node-catalog";
 
 /** Moves a candidate position down until it no longer overlaps an existing node. */
 export function findFreeSpot(start: { x: number; y: number }, nodes: WorkflowFlowNode[]): { x: number; y: number } {

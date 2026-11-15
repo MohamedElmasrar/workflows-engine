@@ -1,59 +1,14 @@
 "use client";
-
-import { Handle, Position, type NodeProps, type NodeTypes } from "@xyflow/react";
+/** Visual node on the canvas: icon, name, summary, status badge, validation marker and handles (two for conditions). */
+import { Handle, type NodeProps, Position } from "@xyflow/react";
 import { AlertCircle } from "lucide-react";
-import { createContext, memo, useContext } from "react";
 import { NodeStatusBadge } from "@/components/status-badge";
-import type { NodeStatus } from "@/lib/api/types";
-import { formatSeconds } from "@/lib/format";
 import { nodeStatusRing } from "@/lib/status";
 import { cn } from "@/lib/utils";
-import type { WorkflowFlowNode } from "../flow-types";
-import { NODE_CATALOG } from "../node-catalog";
-
-/** Per-graph decorations supplied by the editor or the execution view. */
-export interface GraphDecorations {
-  statusById?: Record<string, NodeStatus>;
-  issuesById?: Record<string, string[]>;
-  layoutDirection?: "LR" | "TB";
-}
-
-export const GraphDecorationsContext = createContext<GraphDecorations>({});
-
-function useDecorations(id: string) {
-  const ctx = useContext(GraphDecorationsContext);
-  return {
-    status: ctx.statusById?.[id],
-    issues: ctx.issuesById?.[id],
-    vertical: ctx.layoutDirection === "TB",
-  };
-}
-
-function subtitle(node: WorkflowFlowNode["data"]): string {
-  const c = node.config;
-  switch (node.nodeType) {
-    case "HTTP_REQUEST":
-      return `${String(c.method ?? "GET")} ${String(c.url ?? "")}`;
-    case "SCHEDULE_TRIGGER":
-      return `${String(c.cron ?? "")} · ${String(c.timezone ?? "")}`;
-    case "DELAY":
-      return typeof c.durationSeconds === "number" ? `Wait ${formatSeconds(c.durationSeconds)}` : "";
-    case "LOG":
-      return String(c.message ?? "");
-    case "NOTIFICATION":
-      return `${String(c.channel ?? "")} → ${String(c.recipient ?? "")}`;
-    case "CONDITION": {
-      const n = Array.isArray(c.conditions) ? c.conditions.length : 0;
-      return `${n} condition${n === 1 ? "" : "s"} (${String(c.combinator ?? "AND")})`;
-    }
-    case "WEBHOOK_TRIGGER":
-      return c.requireSignature ? "Signed webhook" : "Webhook";
-    case "MANUAL_TRIGGER":
-      return "Run on demand";
-    default:
-      return NODE_CATALOG[node.nodeType].description;
-  }
-}
+import type { WorkflowFlowNode } from "../../lib/flow-types";
+import { NODE_CATALOG } from "../../lib/node-catalog";
+import { useNodeDecorations } from "./graph-decorations";
+import { nodeSubtitle } from "./node-subtitle";
 
 const categoryStyles = {
   trigger: { container: "rounded-l-full pl-3 border-violet-300 bg-violet-50/60 dark:bg-violet-950/40", icon: "bg-violet-600 text-white" },
@@ -62,8 +17,8 @@ const categoryStyles = {
   delay: { container: "border-dashed border-slate-400 bg-card", icon: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-100" },
 } as const;
 
-function NodeShell({ id, data, selected, kind }: NodeProps<WorkflowFlowNode> & { kind: keyof typeof categoryStyles }) {
-  const { status, issues, vertical } = useDecorations(id);
+export function NodeShell({ id, data, selected, kind }: NodeProps<WorkflowFlowNode> & { kind: keyof typeof categoryStyles }) {
+  const { status, issues, vertical } = useNodeDecorations(id);
   const entry = NODE_CATALOG[data.nodeType];
   const Icon = entry.icon;
   const style = categoryStyles[kind];
@@ -93,8 +48,8 @@ function NodeShell({ id, data, selected, kind }: NodeProps<WorkflowFlowNode> & {
           <p className="truncate text-sm leading-tight font-medium" title={data.name}>
             {data.name}
           </p>
-          <p className="truncate text-xs text-muted-foreground" title={subtitle(data)}>
-            {subtitle(data)}
+          <p className="truncate text-xs text-muted-foreground" title={nodeSubtitle(data)}>
+            {nodeSubtitle(data)}
           </p>
         </div>
         {hasIssues ? (
@@ -147,19 +102,3 @@ function NodeShell({ id, data, selected, kind }: NodeProps<WorkflowFlowNode> & {
     </div>
   );
 }
-
-const TriggerNode = memo((props: NodeProps<WorkflowFlowNode>) => <NodeShell {...props} kind="trigger" />);
-TriggerNode.displayName = "TriggerNode";
-const ActionNode = memo((props: NodeProps<WorkflowFlowNode>) => <NodeShell {...props} kind="action" />);
-ActionNode.displayName = "ActionNode";
-const ConditionNode = memo((props: NodeProps<WorkflowFlowNode>) => <NodeShell {...props} kind="condition" />);
-ConditionNode.displayName = "ConditionNode";
-const DelayNode = memo((props: NodeProps<WorkflowFlowNode>) => <NodeShell {...props} kind="delay" />);
-DelayNode.displayName = "DelayNode";
-
-export const nodeTypes: NodeTypes = {
-  trigger: TriggerNode,
-  action: ActionNode,
-  condition: ConditionNode,
-  delay: DelayNode,
-};

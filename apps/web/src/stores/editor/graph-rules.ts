@@ -3,9 +3,9 @@
  * update nodes/edges/selection, and what a newly added node looks like.
  */
 import { applyEdgeChanges, applyNodeChanges, type Connection, type EdgeChange, type NodeChange } from "@xyflow/react";
-import { createsCycle } from "@/features/editor/flow-mapping";
-import type { WorkflowFlowEdge, WorkflowFlowNode } from "@/features/editor/flow-types";
-import { defaultNodeName, NODE_CATALOG } from "@/features/editor/node-catalog";
+import { createsCycle } from "@/features/editor/lib/flow-mapping";
+import type { WorkflowFlowEdge, WorkflowFlowNode } from "@/features/editor/lib/flow-types";
+import { defaultNodeName, NODE_CATALOG } from "@/features/editor/lib/node-catalog";
 import { isTriggerType, type NodeType, type Position } from "@/lib/api/types";
 import { defaultConfig } from "@/schemas/node-configs";
 import { nextId } from "./state-helpers";

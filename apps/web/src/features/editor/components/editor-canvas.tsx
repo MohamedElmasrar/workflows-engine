@@ -18,8 +18,9 @@ import { NODE_TYPES, type NodeType } from "@/lib/api/types";
 import { usePreferences } from "@/lib/preferences";
 import { useEditorStore } from "@/stores/editor/editor-store";
 import { validateNode } from "@/schemas/node-configs";
-import { GraphDecorationsContext, nodeTypes, type GraphDecorations } from "./nodes/workflow-nodes";
-import type { WorkflowFlowNode } from "./flow-types";
+import { GraphDecorationsContext, type GraphDecorations } from "@/features/editor/components/nodes/graph-decorations";
+import { nodeTypes } from "@/features/editor/components/nodes/node-types";
+import type { WorkflowFlowNode } from "../lib/flow-types";
 
 export const DND_MIME = "application/x-workflow-node-type";
 

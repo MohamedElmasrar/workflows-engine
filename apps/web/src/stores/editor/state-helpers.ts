@@ -1,5 +1,5 @@
 /** Small pure helpers used by the editor store: initial state, ids, dirty tracking, selection. */
-import type { WorkflowFlowEdge, WorkflowFlowNode } from "@/features/editor/flow-types";
+import type { WorkflowFlowEdge, WorkflowFlowNode } from "@/features/editor/lib/flow-types";
 import type { EditorState, WorkflowMeta } from "./types";
 
 export const EMPTY_META: WorkflowMeta = { name: "", description: "", settings: undefined };

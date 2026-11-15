@@ -1,9 +1,5 @@
-"use client";
-
-import { useMemo } from "react";
-import { useShallow } from "zustand/react/shallow";
+/** Builds the list of `{{ ... }}` references a node may use: the trigger, its upstream nodes and execution metadata. */
 import { isTriggerType, type NodeType } from "@/lib/api/types";
-import { useEditorStore } from "@/stores/editor/editor-store";
 import { ancestorsOf } from "./flow-mapping";
 
 export interface TemplateReference {
@@ -58,22 +54,4 @@ export function buildReferences(
     { value: "{{ execution.workflowVersion }}", label: "Workflow version" },
   );
   return refs;
-}
-
-export function useTemplateReferences(nodeId: string): TemplateReference[] {
-  const nodes = useEditorStore(
-    useShallow((s) => s.nodes.map((n) => `${n.id}\u0000${n.data.name}\u0000${n.data.nodeType}`)),
-  );
-  const edges = useEditorStore(useShallow((s) => s.edges.map((e) => `${e.source}\u0000${e.target}`)));
-  return useMemo(() => {
-    const parsedNodes = nodes.map((key) => {
-      const [id, name, type] = key.split("\u0000");
-      return { id, name, type: type as NodeType };
-    });
-    const parsedEdges = edges.map((key) => {
-      const [source, target] = key.split("\u0000");
-      return { source, target };
-    });
-    return buildReferences(nodeId, parsedNodes, parsedEdges);
-  }, [nodeId, nodes, edges]);
 }

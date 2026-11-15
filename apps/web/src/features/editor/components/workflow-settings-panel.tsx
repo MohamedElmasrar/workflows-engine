@@ -6,7 +6,10 @@ import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { workflowSettingsFormSchema, type WorkflowSettingsForm } from "@/schemas/node-forms";
 import { useEditorStore } from "@/stores/editor/editor-store";
-import { errorAt, Field, fieldAria, InputField, useLiveSync } from "./config-forms/form-fields";
+import { errorAt } from "@/features/editor/components/config-forms/fields/error-at";
+import { Field, fieldAria } from "@/features/editor/components/config-forms/fields/field";
+import { InputField } from "@/features/editor/components/config-forms/fields/input-field";
+import { useLiveSync } from "@/features/editor/components/config-forms/hooks/use-live-sync";
 
 export function WorkflowSettingsPanel({ readOnly }: { readOnly: boolean }) {
   const meta = useEditorStore((s) => s.meta);

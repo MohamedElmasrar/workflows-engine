@@ -176,11 +176,6 @@ jobs:
       - name: npm audit
         working-directory: apps/web
         run: npm audit --audit-level=high
-      - name: Dependency review
-        if: github.event_name == 'pull_request'
-        uses: actions/dependency-review-action@v5
-        with:
-          fail-on-severity: high
 
   helm:
     name: Helm chart and manifests

@@ -1,3 +1,4 @@
+/** Dagre-based automatic layout for workflow graphs. */
 import dagre from "@dagrejs/dagre";
 import type { Position } from "@/lib/api/types";
 

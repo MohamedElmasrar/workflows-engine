@@ -1,5 +1,5 @@
 "use client";
-
+/** Read-only workflow graph coloured by node execution status (also used for version previews). */
 import { Background, BackgroundVariant, Controls, MiniMap, ReactFlow, ReactFlowProvider, type Edge } from "@xyflow/react";
 import { useMemo } from "react";
 import type { NodeExecution, NodeStatus, WorkflowDefinition } from "@/lib/api/types";

@@ -1,5 +1,5 @@
 "use client";
-
+/** "5 minutes ago" labels that re-render from a shared clock, with the absolute time as a tooltip. */
 import { useSyncExternalStore } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { formatAbsolute, formatRelative } from "@/lib/format";

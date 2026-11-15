@@ -1,5 +1,5 @@
 "use client";
-
+/** React Flow canvas of the editor: drag-and-drop from the palette, connections and per-node issues. */
 import {
   Background,
   BackgroundVariant,

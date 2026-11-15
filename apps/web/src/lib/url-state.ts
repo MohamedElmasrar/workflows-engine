@@ -1,5 +1,5 @@
 "use client";
-
+/** Hook for list filters stored in the URL query string. */
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useCallback } from "react";
 

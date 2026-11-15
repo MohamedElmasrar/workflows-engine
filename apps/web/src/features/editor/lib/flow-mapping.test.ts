@@ -1,3 +1,4 @@
+/** Tests for converting between definitions and React Flow nodes/edges. */
 import { describe, expect, it } from "vitest";
 import { loadDemoDefinition } from "@/test/fixtures";
 import type { WorkflowDefinition } from "@/lib/api/types";

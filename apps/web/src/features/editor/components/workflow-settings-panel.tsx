@@ -1,5 +1,5 @@
 "use client";
-
+/** Workflow name and description, shown when nothing is selected. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useId, useState } from "react";
 import { useForm } from "react-hook-form";

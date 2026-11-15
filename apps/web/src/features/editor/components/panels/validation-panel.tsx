@@ -1,5 +1,5 @@
 "use client";
-
+/** List of validation issues from the server; clicking an issue selects its node or edge. */
 import { AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
 import { Button } from "@/components/ui/button";

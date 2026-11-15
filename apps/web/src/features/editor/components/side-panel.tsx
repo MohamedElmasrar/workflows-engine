@@ -1,5 +1,5 @@
 "use client";
-
+/** Editor right panel: node config, edge details or workflow settings, depending on the selection. */
 import { ArrowRight, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";

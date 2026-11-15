@@ -1,5 +1,5 @@
 "use client";
-
+/** Sheet for sharing a workflow: list, grant and revoke user permissions. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Trash2, UserPlus } from "lucide-react";
 import { useId, useState } from "react";

@@ -1,3 +1,4 @@
+/** Tests for the SSE parser and the fetch-based SSE connection. */
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { backoffDelay, connectSse } from "./connect";
 import { createSseParser, type SseMessage } from "./parser";

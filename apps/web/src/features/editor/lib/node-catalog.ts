@@ -1,3 +1,4 @@
+/** Catalog of node types: labels, icons, categories, defaults and palette groups. */
 import {
   CalendarClock,
   Clock,

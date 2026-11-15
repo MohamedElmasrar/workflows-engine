@@ -1,3 +1,4 @@
+/** React Flow node and edge types used by the editor. */
 import type { Edge, Node } from "@xyflow/react";
 import type { NodeType, RetryPolicy } from "@/lib/api/types";
 import type { FlowNodeKind } from "./node-catalog";

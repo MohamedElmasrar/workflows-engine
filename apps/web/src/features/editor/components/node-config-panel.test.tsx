@@ -1,3 +1,4 @@
+/** Tests for the node config panel: stored values, validation, live sync, references and read-only mode. */
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";

@@ -1,5 +1,5 @@
 "use client";
-
+/** Shown when a save hits a newer revision: reload the latest, overwrite with the local draft or keep editing. */
 import {
   AlertDialog,
   AlertDialogAction,

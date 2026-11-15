@@ -1,3 +1,4 @@
+/** Tests for the node config schemas and the form ↔ config converters. */
 import { describe, expect, it } from "vitest";
 import { loadDemoDefinition } from "@/test/fixtures";
 import type { NodeType } from "@/lib/api/types";

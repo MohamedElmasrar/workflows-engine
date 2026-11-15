@@ -1,3 +1,4 @@
+/** Root layout: metadata, viewport and the app-wide providers. */
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import "@xyflow/react/dist/style.css";

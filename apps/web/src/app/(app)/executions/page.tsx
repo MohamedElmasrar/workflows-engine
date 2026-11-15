@@ -1,3 +1,4 @@
+/** Route /executions. */
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { LoadingState } from "@/components/loading-state";

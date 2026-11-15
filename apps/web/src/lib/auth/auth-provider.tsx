@@ -1,5 +1,5 @@
 "use client";
-
+/** Keycloak login, token refresh and the current user exposed through `useAuth`. */
 import type Keycloak from "keycloak-js";
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { FullPageMessage, FullPageSpinner } from "@/components/full-page";

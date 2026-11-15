@@ -1,5 +1,5 @@
 "use client";
-
+/** Dialog to start a run of the published workflow with JSON input. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Play } from "lucide-react";
 import { useRouter } from "next/navigation";

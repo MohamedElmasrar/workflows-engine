@@ -1,3 +1,4 @@
+/** Single keycloak-js instance, initialised once. */
 import type Keycloak from "keycloak-js";
 import { env } from "@/lib/env";
 

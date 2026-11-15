@@ -1,3 +1,4 @@
+/** Route /dashboard. */
 import type { Metadata } from "next";
 import { DashboardPage } from "@/features/dashboard/dashboard-page";
 

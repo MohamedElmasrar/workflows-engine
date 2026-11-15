@@ -1,3 +1,4 @@
+/** Page title, optional description and action buttons. */
 import type { ReactNode } from "react";
 
 export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {

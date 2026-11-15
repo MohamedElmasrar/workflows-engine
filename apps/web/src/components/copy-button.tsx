@@ -1,5 +1,5 @@
 "use client";
-
+/** Icon button that copies a value to the clipboard and briefly shows a check mark. */
 import { Check, Copy } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

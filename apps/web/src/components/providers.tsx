@@ -1,5 +1,5 @@
 "use client";
-
+/** App-wide providers: React Query client, tooltips, auth and toasts. */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";

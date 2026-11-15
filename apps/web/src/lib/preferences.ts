@@ -1,5 +1,5 @@
 "use client";
-
+/** UI preferences stored in localStorage, with a hook that keeps tabs in sync. */
 import { useCallback, useSyncExternalStore } from "react";
 
 /** Non-sensitive UI preferences persisted in localStorage. Never store tokens or secrets here. */

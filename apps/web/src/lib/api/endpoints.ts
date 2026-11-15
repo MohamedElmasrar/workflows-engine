@@ -1,3 +1,4 @@
+/** Typed functions for every REST endpoint the UI calls. */
 import { apiFetch } from "@/lib/api/client";
 import type { ExecutionListParams, WorkflowListParams } from "./query-keys";
 import type {

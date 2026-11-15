@@ -1,5 +1,5 @@
 "use client";
-
+/** Details of one node run: status, timing, attempts, input, output and error. */
 import { ChevronDown } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { JsonViewer } from "@/components/json-viewer";

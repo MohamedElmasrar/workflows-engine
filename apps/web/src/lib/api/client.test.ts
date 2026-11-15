@@ -1,3 +1,4 @@
+/** Tests for apiFetch: request headers, RFC 9457 problem details, 401 handling and network errors. */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { setSessionHandlers } from "@/lib/auth/session";
 import { ApiError, toApiError } from "./api-error";

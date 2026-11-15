@@ -1,3 +1,4 @@
+/** Tests for the editor store: loading, editing, graph rules, dirty tracking, read-only mode and version restore. */
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Workflow } from "@/lib/api/types";
 import { loadDemoDefinition } from "@/test/fixtures";

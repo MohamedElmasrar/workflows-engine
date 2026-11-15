@@ -1,5 +1,5 @@
 "use client";
-
+/** Collapsible tree view for JSON values (execution input/output, node results). */
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";

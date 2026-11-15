@@ -1,3 +1,4 @@
+/** Colour tones for execution, node and workflow statuses. */
 import type { ExecutionStatus, NodeStatus, WorkflowStatus } from "@/lib/api/types";
 
 type Tone = "neutral" | "amber" | "blue" | "green" | "red" | "muted";

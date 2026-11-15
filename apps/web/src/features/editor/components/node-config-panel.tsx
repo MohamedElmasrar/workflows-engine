@@ -1,5 +1,5 @@
 "use client";
-
+/** Side panel for the selected node: name/id basics plus the form for its type. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { useState } from "react";

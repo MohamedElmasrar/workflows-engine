@@ -1,5 +1,5 @@
 "use client";
-
+/** App chrome: sidebar navigation, mobile menu, user menu, plus the standard page container. */
 import { Activity, LayoutDashboard, LogOut, Menu, Settings, Workflow, Waypoints } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";

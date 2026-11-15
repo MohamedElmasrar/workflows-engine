@@ -1,5 +1,5 @@
 "use client";
-
+/** Generic confirm/cancel alert dialog, optionally destructive and with a pending state. */
 import type { ReactNode } from "react";
 import {
   AlertDialog,

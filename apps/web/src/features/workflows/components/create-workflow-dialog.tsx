@@ -1,5 +1,5 @@
 "use client";
-
+/** Dialog to create a workflow (name and description) and open it in the editor. */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";

@@ -1,3 +1,4 @@
+/** Tests for the workflow list page: rows and URL filters, empty state and error details. */
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";

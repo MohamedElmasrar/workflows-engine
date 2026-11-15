@@ -1,5 +1,5 @@
 "use client";
-
+/** Previous/next pagination for server-paged lists. */
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 

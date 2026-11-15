@@ -1,3 +1,4 @@
+/** Shared test fixtures. */
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { WorkflowDefinition } from "@/lib/api/types";

@@ -1,3 +1,4 @@
+/** React Query keys and list parameter types, kept in one place so invalidation stays consistent. */
 export interface WorkflowListParams {
   search?: string;
   status?: string;

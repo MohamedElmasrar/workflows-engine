@@ -1,3 +1,4 @@
+/** Converts between stored workflow definitions and React Flow nodes/edges. */
 import type {
   BranchHandle,
   DefinitionEdge,

@@ -1,5 +1,5 @@
 "use client";
-
+/** Searchable timezone picker for the schedule trigger form. */
 import { Check, ChevronsUpDown } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";

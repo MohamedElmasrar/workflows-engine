@@ -1,3 +1,4 @@
+/** Coloured status pills for executions, nodes and workflows. */
 import { Ban, CheckCircle2, CircleDashed, Clock, Loader2, SkipForward, TimerOff, XCircle } from "lucide-react";
 import type { ExecutionStatus, NodeStatus, WorkflowStatus } from "@/lib/api/types";
 import { humanize } from "@/lib/format";

@@ -1,3 +1,4 @@
+/** Formatting helpers for dates, durations, enum labels and ids. */
 const relativeFormatter = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
 const absoluteFormatter = new Intl.DateTimeFormat("en", { dateStyle: "medium", timeStyle: "medium" });
 

@@ -1,5 +1,5 @@
 "use client";
-
+/** Node palette: click or drag a node type onto the canvas. */
 import { useReactFlow } from "@xyflow/react";
 import { Repeat } from "lucide-react";
 import type { DragEvent } from "react";

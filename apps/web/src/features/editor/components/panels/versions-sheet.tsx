@@ -1,5 +1,5 @@
 "use client";
-
+/** Sheet listing published versions with a read-only graph preview of each. */
 import { Eye, History, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

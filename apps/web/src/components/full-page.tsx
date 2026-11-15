@@ -1,3 +1,4 @@
+/** Full-screen spinner and message, used while signing in or when auth fails. */
 import { Loader2, Workflow } from "lucide-react";
 import type { ReactNode } from "react";
 

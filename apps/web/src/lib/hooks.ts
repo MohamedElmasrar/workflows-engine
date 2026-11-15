@@ -1,5 +1,5 @@
 "use client";
-
+/** `useDebouncedValue`: returns a value that only updates after it stops changing for a delay. */
 import { useEffect, useState } from "react";
 
 export function useDebouncedValue<T>(value: T, delayMs = 300): T {

@@ -2,7 +2,7 @@
 # Multi-stage build shared by all Spring Boot services: docker build --build-arg MODULE=services/workflow-service .
 ARG MODULE
 
-FROM eclipse-temurin:21-jdk AS build
+FROM eclipse-temurin:24-jdk AS build
 ARG MODULE
 WORKDIR /src
 # 1) poms only, so dependency resolution is cached until a pom changes
@@ -23,7 +23,7 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked \
     && cp ${MODULE}/target/*-SNAPSHOT.jar /app.jar \
     && java -Djarmode=tools -jar /app.jar extract --layers --launcher --destination /layers
 
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 RUN addgroup -S app && adduser -S -G app -u 10001 app
 WORKDIR /app
 COPY --from=build /layers/dependencies/ ./

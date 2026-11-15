@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { useShallow } from "zustand/react/shallow";
 import { NODE_TYPES, type NodeType } from "@/lib/api/types";
 import { usePreferences } from "@/lib/preferences";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { validateNode } from "@/schemas/node-configs";
 import { GraphDecorationsContext, nodeTypes, type GraphDecorations } from "./nodes/workflow-nodes";
 import type { WorkflowFlowNode } from "./flow-types";

@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle2, X } from "lucide-react";
 import { useReactFlow } from "@xyflow/react";
 import { Button } from "@/components/ui/button";
 import type { ValidationIssue } from "@/lib/api/types";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 
 export function ValidationPanel({ issues, valid, onClose }: { issues: ValidationIssue[]; valid: boolean; onClose: () => void }) {
   const selectNode = useEditorStore((s) => s.selectNode);

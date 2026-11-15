@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it } from "vitest";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import type { Workflow } from "@/lib/api/types";
-import { resetEditorStore, useEditorStore } from "@/stores/editor-store";
+import { resetEditorStore, useEditorStore } from "@/stores/editor/editor-store";
 import { NodeConfigPanel } from "./node-config-panel";
 
 const workflow: Workflow = {

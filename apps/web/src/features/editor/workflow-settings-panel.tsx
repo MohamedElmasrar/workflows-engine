@@ -5,7 +5,7 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Textarea } from "@/components/ui/textarea";
 import { workflowSettingsFormSchema, type WorkflowSettingsForm } from "@/schemas/node-forms";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { errorAt, Field, fieldAria, InputField, useLiveSync } from "./config-forms/form-fields";
 
 export function WorkflowSettingsPanel({ readOnly }: { readOnly: boolean }) {

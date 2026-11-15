@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useShallow } from "zustand/react/shallow";
 import { isTriggerType, type NodeType } from "@/lib/api/types";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { ancestorsOf } from "./flow-mapping";
 
 export interface TemplateReference {

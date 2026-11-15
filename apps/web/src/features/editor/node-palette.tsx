@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { isTriggerType, type NodeType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { DEFAULT_NODE_HEIGHT, DEFAULT_NODE_WIDTH } from "./auto-layout";
 import { DND_MIME } from "./editor-canvas";
 import type { WorkflowFlowNode } from "./flow-types";

@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import type { Workflow } from "@/lib/api/types";
 import { loadDemoDefinition } from "@/test/fixtures";
-import { nextId, resetEditorStore, useEditorStore } from "./editor-store";
+import { resetEditorStore, useEditorStore } from "./editor-store";
+import { nextId } from "./state-helpers";
 
 function workflow(overrides: Partial<Workflow> = {}): Workflow {
   return {

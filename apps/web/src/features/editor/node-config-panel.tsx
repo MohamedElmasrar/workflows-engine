@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { isTriggerType } from "@/lib/api/types";
 import { cn } from "@/lib/utils";
 import { basicsFromForm, basicsToForm, nodeBasicsFormSchema, type NodeBasicsForm } from "@/schemas/node-forms";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { InputField, useLiveSync } from "./config-forms/form-fields";
 import { TypeConfigForm } from "./config-forms/type-forms";
 import type { WorkflowFlowNode } from "./flow-types";

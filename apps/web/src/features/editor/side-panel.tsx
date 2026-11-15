@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { Execution } from "@/lib/api/types";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 import { NodeRunDetails } from "@/features/executions/node-run-details";
 import { NodeConfigPanel } from "./node-config-panel";
 import { WorkflowSettingsPanel } from "./workflow-settings-panel";

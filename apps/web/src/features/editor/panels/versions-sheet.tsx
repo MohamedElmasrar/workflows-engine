@@ -13,7 +13,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ExecutionGraph } from "@/features/executions/execution-graph";
 import { useWorkflowVersion, useWorkflowVersions } from "@/features/workflows/hooks";
-import { useEditorStore } from "@/stores/editor-store";
+import { useEditorStore } from "@/stores/editor/editor-store";
 
 export function VersionsSheet({ workflowId, open, onOpenChange }: { workflowId: string; open: boolean; onOpenChange: (open: boolean) => void }) {
   const versions = useWorkflowVersions(workflowId, open);

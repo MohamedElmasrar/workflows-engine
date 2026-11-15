@@ -38,7 +38,7 @@ import { isApiError } from "@/lib/api/api-error";
 import { isTriggerType, type NodeStatus, type ValidationIssue } from "@/lib/api/types";
 import { humanize } from "@/lib/format";
 import { usePreferences } from "@/lib/preferences";
-import { resetEditorStore, useEditorStore } from "@/stores/editor-store";
+import { resetEditorStore, useEditorStore } from "@/stores/editor/editor-store";
 import { useLatestExecution } from "@/features/executions/hooks";
 import { usePublishWorkflow, useSaveWorkflow, useValidateWorkflow, useWorkflow } from "@/features/workflows/hooks";
 import { EditorCanvas } from "./editor-canvas";

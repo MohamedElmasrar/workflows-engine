@@ -4,26 +4,21 @@ import io.workflowengine.worker.application.port.out.AttemptCache;
 import java.time.Duration;
 import java.util.Optional;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
  * Redis-backed attempt cache shared by all worker replicas. Redis failures degrade to "not cached" (the task runs
  * again) rather than blocking task processing: dedupe here is an optimisation, correctness is ensured by the engine.
  */
+@Slf4j
+@RequiredArgsConstructor
 public class RedisAttemptCache implements AttemptCache {
-
-    private static final Logger log = LoggerFactory.getLogger(RedisAttemptCache.class);
     private static final String PREFIX = "worker:attempt:";
 
     private final StringRedisTemplate redis;
     private final Duration ttl;
-
-    public RedisAttemptCache(StringRedisTemplate redis, Duration ttl) {
-        this.redis = redis;
-        this.ttl = ttl;
-    }
 
     @Override
     public Optional<CachedResult> finished(UUID attemptId) {

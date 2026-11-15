@@ -14,17 +14,26 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "workflow")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorkflowEntity {
 
     @Id
+    @Setter(AccessLevel.NONE)
     private UUID id;
 
     @Column(name = "owner_id", nullable = false, updatable = false)
+    @Setter(AccessLevel.NONE)
     private String ownerId;
 
     @Column(nullable = false)
@@ -53,6 +62,7 @@ public class WorkflowEntity {
     private long aclRevision;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @Setter(AccessLevel.NONE)
     private Instant createdAt;
 
     @Column(name = "updated_at", nullable = false)
@@ -64,6 +74,7 @@ public class WorkflowEntity {
     /** JPA optimistic lock protecting against lost updates between concurrent transactions. */
     @Version
     @Column(name = "lock_version", nullable = false)
+    @Setter(AccessLevel.NONE)
     private long lockVersion;
 
     @ElementCollection(fetch = FetchType.EAGER)
@@ -71,107 +82,9 @@ public class WorkflowEntity {
     @CollectionTable(name = "workflow_permission", joinColumns = @JoinColumn(name = "workflow_id"))
     private Set<PermissionEmbeddable> permissions = new HashSet<>();
 
-    protected WorkflowEntity() {}
-
     public WorkflowEntity(UUID id, String ownerId, Instant createdAt) {
         this.id = id;
         this.ownerId = ownerId;
         this.createdAt = createdAt;
-    }
-
-    public UUID getId() {
-        return id;
-    }
-
-    public String getOwnerId() {
-        return ownerId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    public JsonNode getDraftDefinition() {
-        return draftDefinition;
-    }
-
-    public void setDraftDefinition(JsonNode draftDefinition) {
-        this.draftDefinition = draftDefinition;
-    }
-
-    public long getRevision() {
-        return revision;
-    }
-
-    public void setRevision(long revision) {
-        this.revision = revision;
-    }
-
-    public Integer getLatestVersion() {
-        return latestVersion;
-    }
-
-    public void setLatestVersion(Integer latestVersion) {
-        this.latestVersion = latestVersion;
-    }
-
-    public Long getPublishedRevision() {
-        return publishedRevision;
-    }
-
-    public void setPublishedRevision(Long publishedRevision) {
-        this.publishedRevision = publishedRevision;
-    }
-
-    public long getAclRevision() {
-        return aclRevision;
-    }
-
-    public void setAclRevision(long aclRevision) {
-        this.aclRevision = aclRevision;
-    }
-
-    public Instant getCreatedAt() {
-        return createdAt;
-    }
-
-    public Instant getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(Instant updatedAt) {
-        this.updatedAt = updatedAt;
-    }
-
-    public Instant getArchivedAt() {
-        return archivedAt;
-    }
-
-    public void setArchivedAt(Instant archivedAt) {
-        this.archivedAt = archivedAt;
-    }
-
-    public Set<PermissionEmbeddable> getPermissions() {
-        return permissions;
     }
 }

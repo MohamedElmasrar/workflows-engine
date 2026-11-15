@@ -5,16 +5,14 @@ import io.workflowengine.contracts.Topics;
 import io.workflowengine.contracts.execution.WorkflowExecutionRequested;
 import io.workflowengine.platform.outbox.OutboxWriter;
 import io.workflowengine.trigger.application.port.out.ExecutionRequestPublisher;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class OutboxExecutionRequestPublisher implements ExecutionRequestPublisher {
 
     private final OutboxWriter outbox;
-
-    public OutboxExecutionRequestPublisher(OutboxWriter outbox) {
-        this.outbox = outbox;
-    }
 
     @Override
     public void publish(WorkflowExecutionRequested request) {

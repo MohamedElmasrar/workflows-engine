@@ -6,16 +6,14 @@ import io.workflowengine.workflow.domain.model.WorkflowVersion;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@RequiredArgsConstructor
 public class JpaWorkflowVersionRepository implements WorkflowVersionRepository {
 
     private final WorkflowVersionJpaRepository jpa;
-
-    public JpaWorkflowVersionRepository(WorkflowVersionJpaRepository jpa) {
-        this.jpa = jpa;
-    }
 
     @Override
     public void insert(WorkflowVersion v) {

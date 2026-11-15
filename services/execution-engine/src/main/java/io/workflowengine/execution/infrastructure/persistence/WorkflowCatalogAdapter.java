@@ -1,81 +1,62 @@
 package io.workflowengine.execution.infrastructure.persistence;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.workflowengine.execution.application.port.out.WorkflowCatalog;
 import io.workflowengine.execution.domain.model.PublishedVersion;
 import io.workflowengine.execution.domain.model.WorkflowAccess;
 import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+/**
+ * Projections of workflow-service data. Reads, the scheduling lock and archiving use Spring Data. The two writes that
+ * apply incoming events stay SQL because they must be atomic under concurrent consumers:
+ * {@code INSERT ... ON CONFLICT DO UPDATE ... WHERE acl_revision < excluded.acl_revision} drops out-of-order ACL
+ * snapshots, and {@code ON CONFLICT DO NOTHING} makes version snapshots idempotent. The JPA equivalent (select, then
+ * insert or update) has a race window between the two steps.
+ */
 @Repository
-public class JdbcWorkflowCatalog implements WorkflowCatalog {
+@RequiredArgsConstructor
+public class WorkflowCatalogAdapter implements WorkflowCatalog {
 
+    private final WorkflowProjectionJpaRepository projections;
+    private final WorkflowAccessJpaRepository accessEntries;
+    private final WorkflowVersionSnapshotJpaRepository snapshots;
     private final JdbcTemplate jdbc;
-    private final ObjectMapper objectMapper;
-
-    public JdbcWorkflowCatalog(JdbcTemplate jdbc, ObjectMapper objectMapper) {
-        this.jdbc = jdbc;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public Optional<WorkflowAccess> access(UUID workflowId) {
-        List<Object[]> projection = jdbc.query(
-                "select owner_id, archived from workflow_projection where workflow_id = ?",
-                (rs, i) -> new Object[] {rs.getString(1), rs.getBoolean(2)},
-                workflowId);
-        if (projection.isEmpty()) {
-            return Optional.empty();
-        }
-        Map<String, String> roles = new HashMap<>();
-        jdbc.query(
-                "select user_id, role from workflow_access where workflow_id = ?",
-                rs -> {
-                    roles.put(rs.getString(1), rs.getString(2));
-                },
-                workflowId);
-        return Optional.of(new WorkflowAccess(
-                workflowId, (String) projection.get(0)[0], (Boolean) projection.get(0)[1], roles));
+        return projections
+                .findById(workflowId)
+                .map(p -> new WorkflowAccess(
+                        workflowId,
+                        p.getOwnerId(),
+                        p.isArchived(),
+                        accessEntries.findByWorkflowId(workflowId).stream()
+                                .collect(Collectors.toMap(
+                                        WorkflowAccessEntity::getUserId, WorkflowAccessEntity::getRole))));
     }
 
     @Override
     public Optional<PublishedVersion> version(UUID workflowId, int version) {
-        return jdbc
-                .query(
-                        "select name, definition::text from workflow_version_snapshot where workflow_id = ? and version = ?",
-                        (rs, i) -> new PublishedVersion(workflowId, version, rs.getString(1), parse(rs.getString(2))),
-                        workflowId,
-                        version)
-                .stream()
-                .findFirst();
+        return snapshots
+                .findById(new WorkflowVersionSnapshotEntity.Key(workflowId, version))
+                .map(WorkflowCatalogAdapter::toDomain);
     }
 
     @Override
     public Optional<PublishedVersion> latestVersion(UUID workflowId) {
-        return jdbc
-                .query(
-                        """
-                        select version, name, definition::text from workflow_version_snapshot
-                        where workflow_id = ? order by version desc limit 1
-                        """,
-                        (rs, i) ->
-                                new PublishedVersion(workflowId, rs.getInt(1), rs.getString(2), parse(rs.getString(3))),
-                        workflowId)
-                .stream()
-                .findFirst();
+        return snapshots.findFirstByWorkflowIdOrderByVersionDesc(workflowId).map(WorkflowCatalogAdapter::toDomain);
     }
 
     @Override
     public void lockForScheduling(UUID workflowId) {
-        jdbc.query("select 1 from workflow_projection where workflow_id = ? for update", rs -> {}, workflowId);
+        projections.findLockedByWorkflowId(workflowId);
     }
 
     @Override
@@ -136,15 +117,10 @@ public class JdbcWorkflowCatalog implements WorkflowCatalog {
 
     @Override
     public void markArchived(UUID workflowId) {
-        jdbc.update(
-                "update workflow_projection set archived = true, updated_at = now() where workflow_id = ?", workflowId);
+        projections.markArchived(workflowId, Instant.now());
     }
 
-    private JsonNode parse(String json) {
-        try {
-            return objectMapper.readTree(json);
-        } catch (Exception e) {
-            throw new IllegalStateException("Corrupt workflow definition snapshot", e);
-        }
+    private static PublishedVersion toDomain(WorkflowVersionSnapshotEntity s) {
+        return new PublishedVersion(s.getWorkflowId(), s.getVersion(), s.getName(), s.getDefinition());
     }
 }

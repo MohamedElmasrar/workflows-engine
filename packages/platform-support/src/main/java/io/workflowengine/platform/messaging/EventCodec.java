@@ -5,15 +5,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.workflowengine.contracts.EventEnvelope;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 /** Serializes and deserializes {@link EventEnvelope}s and their payloads. */
+@RequiredArgsConstructor
 public class EventCodec {
 
     private final ObjectMapper objectMapper;
-
-    public EventCodec(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
 
     public EventEnvelope envelope(
             String eventType, String aggregateId, Object payload, String correlationId, String causationId) {

@@ -16,11 +16,13 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 /**
  * HTTP Request node. Builds the request from resolved configuration, classifies the response (5xx/429 retryable, other
  * 4xx not) and returns status, selected headers and the body (parsed as JSON when possible).
  */
+@RequiredArgsConstructor
 public class HttpRequestHandler implements NodeHandler {
 
     private static final Set<String> METHODS = Set.of("GET", "POST", "PUT", "PATCH", "DELETE");
@@ -31,11 +33,6 @@ public class HttpRequestHandler implements NodeHandler {
 
     private final HttpGateway gateway;
     private final ObjectMapper objectMapper;
-
-    public HttpRequestHandler(HttpGateway gateway, ObjectMapper objectMapper) {
-        this.gateway = gateway;
-        this.objectMapper = objectMapper;
-    }
 
     @Override
     public NodeType supportedType() {

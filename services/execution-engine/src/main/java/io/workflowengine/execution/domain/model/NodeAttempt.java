@@ -2,11 +2,15 @@ package io.workflowengine.execution.domain.model;
 
 import java.time.Instant;
 import java.util.UUID;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * One dispatch of a node to a worker. The attempt id fences results: only the node's current attempt may change its
  * state. The lease is the deadline by which a result must arrive.
  */
+@Getter
+@Accessors(fluent = true)
 public final class NodeAttempt {
 
     public enum Status {
@@ -77,45 +81,5 @@ public final class NodeAttempt {
 
     public boolean isOpen() {
         return status == Status.DISPATCHED || status == Status.RUNNING;
-    }
-
-    public UUID attemptId() {
-        return attemptId;
-    }
-
-    public int number() {
-        return number;
-    }
-
-    public Status status() {
-        return status;
-    }
-
-    public Instant dispatchedAt() {
-        return dispatchedAt;
-    }
-
-    public Instant leaseExpiresAt() {
-        return leaseExpiresAt;
-    }
-
-    public Instant startedAt() {
-        return startedAt;
-    }
-
-    public Instant finishedAt() {
-        return finishedAt;
-    }
-
-    public String workerId() {
-        return workerId;
-    }
-
-    public String errorCode() {
-        return errorCode;
-    }
-
-    public String errorMessage() {
-        return errorMessage;
     }
 }

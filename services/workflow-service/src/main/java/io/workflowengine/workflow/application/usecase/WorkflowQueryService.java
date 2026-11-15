@@ -17,26 +17,17 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class WorkflowQueryService {
 
     private final WorkflowRepository workflows;
     private final WorkflowVersionRepository versions;
     private final WorkflowValidation validation;
     private final UserDirectory users;
-
-    public WorkflowQueryService(
-            WorkflowRepository workflows,
-            WorkflowVersionRepository versions,
-            WorkflowValidation validation,
-            UserDirectory users) {
-        this.workflows = workflows;
-        this.versions = versions;
-        this.validation = validation;
-        this.users = users;
-    }
 
     public Workflow get(Actor actor, UUID id) {
         Workflow workflow = workflows.findById(id).orElseThrow(() -> new WorkflowNotFoundException(id));

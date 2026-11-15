@@ -27,17 +27,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Executes one task: replay a cached result if this attempt already finished, otherwise report Started, run the
  * handler under the node timeout, report the result and cache it. The Kafka offset is committed only after this
  * method returns, so a crash at any point causes redelivery (at-least-once).
  */
+@Slf4j
+@RequiredArgsConstructor
 public class TaskProcessor {
-
-    private static final Logger log = LoggerFactory.getLogger(TaskProcessor.class);
     public static final int MAX_OUTPUT_BYTES = 256 * 1024;
 
     private final NodeHandlerRegistry registry;
@@ -48,25 +48,6 @@ public class TaskProcessor {
     private final ObjectMapper objectMapper;
     private final Clock clock;
     private final String workerId;
-
-    public TaskProcessor(
-            NodeHandlerRegistry registry,
-            ResultPublisher publisher,
-            AttemptCache cache,
-            WorkerMetrics metrics,
-            ExecutorService executor,
-            ObjectMapper objectMapper,
-            Clock clock,
-            String workerId) {
-        this.registry = registry;
-        this.publisher = publisher;
-        this.cache = cache;
-        this.metrics = metrics;
-        this.executor = executor;
-        this.objectMapper = objectMapper;
-        this.clock = clock;
-        this.workerId = workerId;
-    }
 
     public void process(NodeExecutionScheduled task) {
         String key = task.executionId().toString();

@@ -5,9 +5,14 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import java.time.Instant;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "app_user")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class AppUserEntity {
 
     @Id
@@ -20,14 +25,4 @@ public class AppUserEntity {
 
     @Column(name = "last_seen_at", nullable = false)
     private Instant lastSeenAt;
-
-    protected AppUserEntity() {}
-
-    public String getId() {
-        return id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
 }

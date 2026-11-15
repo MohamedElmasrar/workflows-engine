@@ -12,17 +12,15 @@ import io.workflowengine.execution.domain.model.WorkflowExecution;
 import io.workflowengine.platform.outbox.OutboxWriter;
 import java.time.Instant;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Writes worker tasks and lifecycle events to the outbox in the same transaction as the state change. */
 @Component
+@RequiredArgsConstructor
 public class OutboxEffectPublisher implements ExecutionEffectPublisher {
 
     private final OutboxWriter outbox;
-
-    public OutboxEffectPublisher(OutboxWriter outbox) {
-        this.outbox = outbox;
-    }
 
     @Override
     public void publish(WorkflowExecution execution, List<ExecutionEffect> effects) {

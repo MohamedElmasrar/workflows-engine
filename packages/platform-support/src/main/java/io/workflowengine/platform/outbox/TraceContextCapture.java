@@ -6,20 +6,17 @@ import io.micrometer.tracing.propagation.Propagator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Captures the current trace context when an outbox row is written and restores it when the row is published, so a
  * trace continues across the asynchronous outbox hop. Without a tracer it does nothing.
  */
+@RequiredArgsConstructor
 public class TraceContextCapture {
 
     private final Tracer tracer;
     private final Propagator propagator;
-
-    public TraceContextCapture(Tracer tracer, Propagator propagator) {
-        this.tracer = tracer;
-        this.propagator = propagator;
-    }
 
     public static TraceContextCapture noop() {
         return new TraceContextCapture(null, null);

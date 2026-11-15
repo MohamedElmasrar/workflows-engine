@@ -16,19 +16,17 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Semantic validation of a workflow graph (structural validation is done against the JSON schema first). Enforces
  * the DAG execution model: one trigger, valid references, no cycles, everything reachable from the trigger, branch
  * handles only on CONDITION nodes, and templates that only reference ancestor nodes.
  */
+@RequiredArgsConstructor
 public class GraphValidator {
 
     private final ScheduleRules scheduleRules;
-
-    public GraphValidator(ScheduleRules scheduleRules) {
-        this.scheduleRules = scheduleRules;
-    }
 
     public ValidationResult validate(WorkflowDefinition definition) {
         List<ValidationIssue> errors = new ArrayList<>();

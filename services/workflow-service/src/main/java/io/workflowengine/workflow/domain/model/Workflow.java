@@ -15,11 +15,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * Workflow aggregate: metadata, the editable draft definition and the access-control list. Published versions are
  * separate immutable objects created by {@link #publish}.
  */
+@Getter
+@Accessors(fluent = true)
 public final class Workflow {
 
     private final UUID id;
@@ -35,7 +40,11 @@ public final class Workflow {
     private long aclRevision;
     private Instant updatedAt;
     private Instant archivedAt;
+
+    @Getter(AccessLevel.NONE)
     private final Map<String, Permission> permissions;
+
+    @Getter(AccessLevel.NONE)
     private final List<WorkflowDomainEvent> pendingEvents = new ArrayList<>();
 
     private Workflow(
@@ -236,58 +245,6 @@ public final class Workflow {
             throw new IllegalArgumentException("Workflow name must be 1-100 characters");
         }
         return name.strip();
-    }
-
-    public UUID id() {
-        return id;
-    }
-
-    public String ownerId() {
-        return ownerId;
-    }
-
-    public String name() {
-        return name;
-    }
-
-    public String description() {
-        return description;
-    }
-
-    public WorkflowStatus status() {
-        return status;
-    }
-
-    public WorkflowDefinition draft() {
-        return draft;
-    }
-
-    public long revision() {
-        return revision;
-    }
-
-    public Integer latestVersion() {
-        return latestVersion;
-    }
-
-    public Long publishedRevision() {
-        return publishedRevision;
-    }
-
-    public long aclRevision() {
-        return aclRevision;
-    }
-
-    public Instant createdAt() {
-        return createdAt;
-    }
-
-    public Instant updatedAt() {
-        return updatedAt;
-    }
-
-    public Instant archivedAt() {
-        return archivedAt;
     }
 
     public Collection<Permission> permissions() {

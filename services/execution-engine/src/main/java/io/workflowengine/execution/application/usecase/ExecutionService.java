@@ -34,11 +34,13 @@ import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Function;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Execution use cases. Every operation loads the aggregate, applies one domain method and persists state, history and
  * outbox effects in a single transaction (re-run on optimistic-lock conflicts).
  */
+@RequiredArgsConstructor
 public class ExecutionService {
 
     public static final int MAX_INPUT_BYTES = 256 * 1024;
@@ -53,25 +55,6 @@ public class ExecutionService {
     private final MessageDeduplicator deduplicator;
     private final EngineSettings settings;
     private final Clock clock;
-
-    public ExecutionService(
-            ExecutionRepository executions,
-            WorkflowCatalog catalog,
-            ExecutionEffectPublisher publisher,
-            ExecutionMetrics metrics,
-            TransactionRunner tx,
-            MessageDeduplicator deduplicator,
-            EngineSettings settings,
-            Clock clock) {
-        this.executions = executions;
-        this.catalog = catalog;
-        this.publisher = publisher;
-        this.metrics = metrics;
-        this.tx = tx;
-        this.deduplicator = deduplicator;
-        this.settings = settings;
-        this.clock = clock;
-    }
 
     /** Manual start by a user. Requires EDITOR or OWNER on the workflow. */
     public StartResult startManual(

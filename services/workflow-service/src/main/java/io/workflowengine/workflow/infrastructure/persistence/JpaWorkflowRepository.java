@@ -12,6 +12,7 @@ import io.workflowengine.workflow.domain.model.WorkflowStatus;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -19,13 +20,10 @@ import org.springframework.stereotype.Repository;
 
 /** Adapter mapping the {@link Workflow} aggregate to JPA entities. */
 @Repository
+@RequiredArgsConstructor
 public class JpaWorkflowRepository implements WorkflowRepository {
 
     private final WorkflowJpaRepository jpa;
-
-    public JpaWorkflowRepository(WorkflowJpaRepository jpa) {
-        this.jpa = jpa;
-    }
 
     @Override
     public Optional<Workflow> findById(UUID id) {

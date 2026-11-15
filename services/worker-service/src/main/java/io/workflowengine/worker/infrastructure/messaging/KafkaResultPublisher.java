@@ -8,6 +8,7 @@ import io.workflowengine.worker.application.port.out.ResultPublisher;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -15,15 +16,11 @@ import org.springframework.kafka.core.KafkaTemplate;
  * Publishes results and waits for the broker acknowledgement. The worker has no database, so instead of an outbox it
  * relies on ordering: results are acknowledged before the task offset is committed.
  */
+@RequiredArgsConstructor
 public class KafkaResultPublisher implements ResultPublisher {
 
     private final KafkaTemplate<String, String> kafka;
     private final EventCodec codec;
-
-    public KafkaResultPublisher(KafkaTemplate<String, String> kafka, EventCodec codec) {
-        this.kafka = kafka;
-        this.codec = codec;
-    }
 
     @Override
     public void publish(String eventType, String executionId, Object payload) {

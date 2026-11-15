@@ -5,8 +5,7 @@ import static io.workflowengine.platform.web.ProblemDetailsAdvice.problem;
 import io.workflowengine.trigger.domain.exception.TriggerAccessDeniedException;
 import io.workflowengine.trigger.domain.exception.TriggerNotFoundException;
 import io.workflowengine.trigger.domain.exception.WebhookRejectedException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -16,9 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 @Order(Ordered.HIGHEST_PRECEDENCE)
+@Slf4j
 public class TriggerExceptionAdvice {
-
-    private static final Logger log = LoggerFactory.getLogger(TriggerExceptionAdvice.class);
 
     @ExceptionHandler(WebhookRejectedException.class)
     ProblemDetail rejected(WebhookRejectedException e) {

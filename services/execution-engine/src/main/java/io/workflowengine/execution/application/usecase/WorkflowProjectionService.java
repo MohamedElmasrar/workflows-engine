@@ -7,8 +7,10 @@ import io.workflowengine.execution.domain.model.PublishedVersion;
 import java.time.Instant;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 
 /** Maintains the local projections of workflow ACLs and published versions from workflow-service events. */
+@RequiredArgsConstructor
 public class WorkflowProjectionService {
 
     public static final String CONSUMER = "workflow-events";
@@ -16,12 +18,6 @@ public class WorkflowProjectionService {
     private final WorkflowCatalog catalog;
     private final MessageDeduplicator deduplicator;
     private final TransactionRunner tx;
-
-    public WorkflowProjectionService(WorkflowCatalog catalog, MessageDeduplicator deduplicator, TransactionRunner tx) {
-        this.catalog = catalog;
-        this.deduplicator = deduplicator;
-        this.tx = tx;
-    }
 
     public void accessUpdated(
             UUID eventId,

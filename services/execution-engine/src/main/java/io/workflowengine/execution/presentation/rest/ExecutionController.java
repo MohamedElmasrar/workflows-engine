@@ -25,6 +25,7 @@ import java.net.URI;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -40,15 +41,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @Validated
 @Tag(name = "Executions", description = "Start, inspect, cancel and retry workflow executions")
+@RequiredArgsConstructor
 public class ExecutionController {
 
     private final ExecutionService commands;
     private final ExecutionQueryService queries;
-
-    public ExecutionController(ExecutionService commands, ExecutionQueryService queries) {
-        this.commands = commands;
-        this.queries = queries;
-    }
 
     @PostMapping("/api/v1/workflows/{workflowId}/executions")
     @Operation(

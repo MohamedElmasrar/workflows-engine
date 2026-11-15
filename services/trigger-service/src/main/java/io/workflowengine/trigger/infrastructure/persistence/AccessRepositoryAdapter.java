@@ -4,18 +4,18 @@ import io.workflowengine.trigger.application.port.out.AccessRepository;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public class JdbcAccessRepository implements AccessRepository {
+@RequiredArgsConstructor
+public class AccessRepositoryAdapter implements AccessRepository {
 
+    private final WorkflowAccessJpaRepository access;
     private final JdbcTemplate jdbc;
 
-    public JdbcAccessRepository(JdbcTemplate jdbc) {
-        this.jdbc = jdbc;
-    }
-
+    /** SQL on purpose: applies an ACL snapshot only if its revision is newer, atomically (out-of-order events). */
     @Override
     public boolean replace(UUID workflowId, String ownerId, long aclRevision, Map<String, String> roles) {
         int updated = jdbc.update(
@@ -41,13 +41,6 @@ public class JdbcAccessRepository implements AccessRepository {
 
     @Override
     public Optional<String> roleOf(UUID workflowId, String userId) {
-        return jdbc
-                .query(
-                        "select role from workflow_access where workflow_id = ? and user_id = ?",
-                        (rs, i) -> rs.getString(1),
-                        workflowId,
-                        userId)
-                .stream()
-                .findFirst();
+        return access.findById(new WorkflowAccessEntity.Key(workflowId, userId)).map(WorkflowAccessEntity::getRole);
     }
 }

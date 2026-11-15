@@ -17,12 +17,14 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Receives webhooks: token lookup, optional HMAC verification with a replay window, JSON payload validation, delivery
  * deduplication, then an execution request through the outbox, all in one transaction.
  */
+@RequiredArgsConstructor
 public class WebhookService {
 
     public static final int MAX_PAYLOAD_BYTES = 256 * 1024;
@@ -35,21 +37,6 @@ public class WebhookService {
     private final ExecutionRequestPublisher publisher;
     private final ObjectMapper objectMapper;
     private final Clock clock;
-
-    public WebhookService(
-            TriggerRepository triggers,
-            DeliveryRepository deliveries,
-            SecretProtector secrets,
-            ExecutionRequestPublisher publisher,
-            ObjectMapper objectMapper,
-            Clock clock) {
-        this.triggers = triggers;
-        this.deliveries = deliveries;
-        this.secrets = secrets;
-        this.publisher = publisher;
-        this.objectMapper = objectMapper;
-        this.clock = clock;
-    }
 
     public record Incoming(
             String token, String contentType, Map<String, String> headers, Map<String, String> query, byte[] body) {}

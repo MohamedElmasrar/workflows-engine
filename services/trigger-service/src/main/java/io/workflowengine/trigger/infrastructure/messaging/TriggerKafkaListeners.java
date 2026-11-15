@@ -12,19 +12,16 @@ import io.workflowengine.platform.messaging.MessageContext;
 import io.workflowengine.trigger.application.usecase.TriggerRegistrationService;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class TriggerKafkaListeners {
 
     private final EventCodec codec;
     private final TriggerRegistrationService registrations;
-
-    public TriggerKafkaListeners(EventCodec codec, TriggerRegistrationService registrations) {
-        this.codec = codec;
-        this.registrations = registrations;
-    }
 
     @KafkaListener(topics = Topics.WORKFLOW_EVENTS, groupId = "trigger-service")
     public void onWorkflowEvent(String value) {

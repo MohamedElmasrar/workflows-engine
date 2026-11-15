@@ -7,20 +7,18 @@ import io.workflowengine.worker.domain.model.NodeExecutionContext;
 import io.workflowengine.worker.domain.model.NodeExecutionException;
 import io.workflowengine.worker.domain.model.NodeResult;
 import java.time.Clock;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** Writes a user-defined message to the worker log (with execution context in the MDC) and echoes it as output. */
+@RequiredArgsConstructor
 public class LogHandler implements NodeHandler {
 
     private static final Logger log = LoggerFactory.getLogger("workflow.node.log");
     private static final int MAX_MESSAGE = 4000;
 
     private final Clock clock;
-
-    public LogHandler(Clock clock) {
-        this.clock = clock;
-    }
 
     @Override
     public NodeType supportedType() {

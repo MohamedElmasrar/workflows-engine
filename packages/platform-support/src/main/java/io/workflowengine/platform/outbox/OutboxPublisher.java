@@ -14,9 +14,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.producer.ProducerRecord;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,9 +26,8 @@ import org.springframework.transaction.support.TransactionTemplate;
  * which keeps publication in insertion order. A row is marked published only after the broker acknowledged it; if
  * the instance dies between ack and commit the row is sent again, so consumers must be idempotent.
  */
+@Slf4j
 public class OutboxPublisher {
-
-    private static final Logger log = LoggerFactory.getLogger(OutboxPublisher.class);
     private static final long ADVISORY_LOCK_KEY = 0x6f7574626f78L; // "outbox"
     private static final TypeReference<Map<String, String>> HEADERS = new TypeReference<>() {};
 

@@ -7,8 +7,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /** Runtime state of one node inside a {@link WorkflowExecution}. Mutated only through the aggregate. */
+@Getter
+@Accessors(fluent = true)
 public final class NodeExecution {
 
     private final String nodeId;
@@ -25,6 +30,8 @@ public final class NodeExecution {
     private NodeFailure error;
     private Instant startedAt;
     private Instant finishedAt;
+
+    @Getter(AccessLevel.NONE)
     private final List<NodeAttempt> attempts;
 
     public NodeExecution(String nodeId, String nodeType) {
@@ -163,62 +170,6 @@ public final class NodeExecution {
 
     public boolean isCurrentAttempt(UUID attemptId) {
         return currentAttemptId != null && currentAttemptId.equals(attemptId) && status.isActive();
-    }
-
-    public String nodeId() {
-        return nodeId;
-    }
-
-    public String nodeType() {
-        return nodeType;
-    }
-
-    public NodeStatus status() {
-        return status;
-    }
-
-    public int attemptCount() {
-        return attemptCount;
-    }
-
-    public UUID currentAttemptId() {
-        return currentAttemptId;
-    }
-
-    public Instant availableAt() {
-        return availableAt;
-    }
-
-    public Instant leaseExpiresAt() {
-        return leaseExpiresAt;
-    }
-
-    public Instant resumeAt() {
-        return resumeAt;
-    }
-
-    public JsonNode input() {
-        return input;
-    }
-
-    public JsonNode output() {
-        return output;
-    }
-
-    public String branch() {
-        return branch;
-    }
-
-    public NodeFailure error() {
-        return error;
-    }
-
-    public Instant startedAt() {
-        return startedAt;
-    }
-
-    public Instant finishedAt() {
-        return finishedAt;
     }
 
     public List<NodeAttempt> attempts() {

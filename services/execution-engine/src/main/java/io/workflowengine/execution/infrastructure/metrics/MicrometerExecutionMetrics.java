@@ -10,6 +10,7 @@ import io.workflowengine.execution.domain.model.WorkflowExecution;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -19,13 +20,10 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
  * bounded (status, trigger type, node type); execution ids are never used as labels.
  */
 @Component
+@RequiredArgsConstructor
 public class MicrometerExecutionMetrics implements ExecutionMetrics {
 
     private final MeterRegistry registry;
-
-    public MicrometerExecutionMetrics(MeterRegistry registry) {
-        this.registry = registry;
-    }
 
     @Override
     public void recordEffects(WorkflowExecution execution, List<ExecutionEffect> effects) {

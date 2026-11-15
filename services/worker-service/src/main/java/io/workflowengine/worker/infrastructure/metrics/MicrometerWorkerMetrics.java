@@ -5,14 +5,12 @@ import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import io.workflowengine.worker.application.port.out.WorkerMetrics;
 import java.time.Duration;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 public class MicrometerWorkerMetrics implements WorkerMetrics {
 
     private final MeterRegistry registry;
-
-    public MicrometerWorkerMetrics(MeterRegistry registry) {
-        this.registry = registry;
-    }
 
     @Override
     public void taskProcessed(String nodeType, String outcome, Duration duration) {

@@ -18,23 +18,17 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class ExecutionQueryService {
 
     private final ExecutionRepository executions;
     private final ExecutionReadModel readModel;
     private final WorkflowCatalog catalog;
     private final Clock clock;
-
-    public ExecutionQueryService(
-            ExecutionRepository executions, ExecutionReadModel readModel, WorkflowCatalog catalog, Clock clock) {
-        this.executions = executions;
-        this.readModel = readModel;
-        this.catalog = catalog;
-        this.clock = clock;
-    }
 
     public record Detail(WorkflowExecution execution, PublishedVersion version, long lastSequence) {}
 

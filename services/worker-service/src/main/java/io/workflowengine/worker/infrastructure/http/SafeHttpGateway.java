@@ -13,6 +13,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
@@ -25,17 +26,14 @@ import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
 import org.apache.hc.core5.util.Timeout;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Outbound HTTP adapter (Apache HttpClient 5). Enforces: http(s) only, SSRF policy on every hop (DNS resolver plus
  * literal-IP check), manual redirect handling (max 5 hops, each re-validated), response size limit, no proxies, no
  * cookies, and a circuit breaker per destination host. Request headers and bodies are never logged.
  */
+@Slf4j
 public class SafeHttpGateway implements HttpGateway {
-
-    private static final Logger log = LoggerFactory.getLogger(SafeHttpGateway.class);
     private static final int MAX_REDIRECTS = 5;
     private static final Set<Integer> REDIRECTS = Set.of(301, 302, 303, 307, 308);
 

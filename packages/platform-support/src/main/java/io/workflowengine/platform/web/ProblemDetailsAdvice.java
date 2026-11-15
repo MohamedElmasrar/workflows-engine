@@ -4,8 +4,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
@@ -26,9 +25,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  */
 @RestControllerAdvice
 @Order(Ordered.LOWEST_PRECEDENCE)
+@Slf4j
 public class ProblemDetailsAdvice extends ResponseEntityExceptionHandler {
-
-    private static final Logger log = LoggerFactory.getLogger(ProblemDetailsAdvice.class);
 
     public static ProblemDetail problem(HttpStatus status, String type, String title, String detail) {
         ProblemDetail problem = ProblemDetail.forStatusAndDetail(status, detail);

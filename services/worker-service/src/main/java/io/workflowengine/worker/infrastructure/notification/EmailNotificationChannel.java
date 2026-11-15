@@ -6,11 +6,13 @@ import io.workflowengine.worker.domain.model.NodeExecutionException;
 import io.workflowengine.worker.domain.port.NotificationChannel;
 import jakarta.mail.internet.MimeMessage;
 import java.util.regex.Pattern;
+import lombok.RequiredArgsConstructor;
 import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 
 /** E-mail adapter over SMTP (Mailpit in development), protected by a circuit breaker. */
+@RequiredArgsConstructor
 public class EmailNotificationChannel implements NotificationChannel {
 
     private static final Pattern EMAIL = Pattern.compile("^[^@\\s]{1,64}@[^@\\s]{1,255}\\.[^@\\s]{2,}$");
@@ -18,12 +20,6 @@ public class EmailNotificationChannel implements NotificationChannel {
     private final JavaMailSender sender;
     private final CircuitBreaker breaker;
     private final String from;
-
-    public EmailNotificationChannel(JavaMailSender sender, CircuitBreaker breaker, String from) {
-        this.sender = sender;
-        this.breaker = breaker;
-        this.from = from;
-    }
 
     @Override
     public String channel() {

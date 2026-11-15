@@ -1,23 +1,19 @@
 package io.workflowengine.trigger.infrastructure.scheduling;
 
 import io.workflowengine.trigger.application.usecase.ScheduleService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(value = "trigger.scheduler.enabled", matchIfMissing = true)
+@Slf4j
+@RequiredArgsConstructor
 public class SchedulePoller {
 
-    private static final Logger log = LoggerFactory.getLogger(SchedulePoller.class);
-
     private final ScheduleService schedules;
-
-    public SchedulePoller(ScheduleService schedules) {
-        this.schedules = schedules;
-    }
 
     @Scheduled(fixedDelayString = "${trigger.scheduler.interval:5s}")
     public void poll() {

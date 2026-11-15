@@ -6,6 +6,7 @@ import io.workflowengine.contracts.EventEnvelope;
 import io.workflowengine.platform.messaging.EventCodec;
 import io.workflowengine.platform.messaging.MessageContext;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,20 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
  * Appends events to the transactional outbox. Must run inside the transaction that performs the state change, so the
  * event exists if and only if the change was committed.
  */
+@RequiredArgsConstructor
 public class OutboxWriter {
 
     private final JdbcTemplate jdbcTemplate;
     private final EventCodec codec;
     private final ObjectMapper objectMapper;
     private final TraceContextCapture traceContext;
-
-    public OutboxWriter(
-            JdbcTemplate jdbcTemplate, EventCodec codec, ObjectMapper objectMapper, TraceContextCapture traceContext) {
-        this.jdbcTemplate = jdbcTemplate;
-        this.codec = codec;
-        this.objectMapper = objectMapper;
-        this.traceContext = traceContext;
-    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public EventEnvelope append(String topic, String eventType, String aggregateId, Object payload) {

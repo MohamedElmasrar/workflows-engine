@@ -14,5 +14,5 @@
 | [0010](0010-event-carried-state-transfer.md) | Projections instead of synchronous calls between services |
 | [0011](0011-manual-runs-served-by-engine.md) | Manual executions are served by the execution engine |
 | [0012](0012-delay-and-timers-in-engine.md) | Delay nodes are timers in the engine |
-| [0013](0013-trigger-service-uses-jdbc.md) | Trigger service persistence with plain JDBC |
+| [0013](0013-spring-data-jpa-and-sql.md) | Spring Data JPA by default, SQL only for atomic coordination |
 | [0014](0014-redis-usage.md) | Redis only for rate limiting and the worker attempt cache |

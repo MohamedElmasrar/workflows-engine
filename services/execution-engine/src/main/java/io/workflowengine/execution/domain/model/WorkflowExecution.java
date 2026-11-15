@@ -19,6 +19,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 
 /**
  * Aggregate root of one workflow run: the execution state machine, the node state machines and the DAG scheduling
@@ -28,6 +31,8 @@ import java.util.UUID;
  * <p>Join semantics: a node becomes READY once all incoming edges are resolved (source terminal) and at least one is
  * active (source COMPLETED and the edge matches its selected branch). Resolved with none active means SKIPPED.
  */
+@Getter
+@Accessors(fluent = true)
 public final class WorkflowExecution {
 
     /** Persistable scalar state of the root. */
@@ -55,24 +60,53 @@ public final class WorkflowExecution {
     private final UUID id;
     private final UUID workflowId;
     private final int workflowVersion;
+
+    @Getter(AccessLevel.NONE)
     private final String workflowName;
+
     private final TriggerType triggerType;
+
+    @Getter(AccessLevel.NONE)
     private final String triggeredBy;
+
     private final JsonNode input;
+
+    @Getter(AccessLevel.NONE)
     private final String idempotencyKey;
+
+    @Getter(AccessLevel.NONE)
     private final UUID retryOf;
+
     private final Instant createdAt;
     private final ExecutionGraph graph;
+
+    @Getter(AccessLevel.NONE)
     private final EngineSettings settings;
+
+    @Getter(AccessLevel.NONE)
     private final Map<String, NodeExecution> nodes;
+
     private ExecutionStatus status;
+
+    @Getter(AccessLevel.NONE)
     private JsonNode output;
+
+    @Getter(AccessLevel.NONE)
     private ExecutionError error;
+
     private Instant startedAt;
     private Instant finishedAt;
+
+    @Getter(AccessLevel.NONE)
     private Instant deadlineAt;
+
+    @Getter(AccessLevel.NONE)
     private long eventSequence;
+
+    @Getter(AccessLevel.NONE)
     private final List<ExecutionHistoryEntry> newHistory = new ArrayList<>();
+
+    @Getter(AccessLevel.NONE)
     private final List<ExecutionEffect> effects = new ArrayList<>();
 
     private WorkflowExecution(State s, ExecutionGraph graph, List<NodeExecution> nodeList, EngineSettings settings) {
@@ -538,46 +572,6 @@ public final class WorkflowExecution {
                 finishedAt,
                 deadlineAt,
                 eventSequence);
-    }
-
-    public UUID id() {
-        return id;
-    }
-
-    public UUID workflowId() {
-        return workflowId;
-    }
-
-    public int workflowVersion() {
-        return workflowVersion;
-    }
-
-    public ExecutionStatus status() {
-        return status;
-    }
-
-    public JsonNode input() {
-        return input;
-    }
-
-    public TriggerType triggerType() {
-        return triggerType;
-    }
-
-    public ExecutionGraph graph() {
-        return graph;
-    }
-
-    public Instant createdAt() {
-        return createdAt;
-    }
-
-    public Instant startedAt() {
-        return startedAt;
-    }
-
-    public Instant finishedAt() {
-        return finishedAt;
     }
 
     public NodeExecution node(String nodeId) {

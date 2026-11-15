@@ -9,6 +9,10 @@ import jakarta.persistence.Table;
 import java.io.Serializable;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.Immutable;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
@@ -17,6 +21,9 @@ import org.hibernate.type.SqlTypes;
 @Immutable
 @Table(name = "workflow_version")
 @IdClass(WorkflowVersionEntity.Key.class)
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class WorkflowVersionEntity {
 
     public record Key(UUID workflowId, int version) implements Serializable {
@@ -47,47 +54,4 @@ public class WorkflowVersionEntity {
 
     @Column(name = "published_at", nullable = false)
     private Instant publishedAt;
-
-    protected WorkflowVersionEntity() {}
-
-    public WorkflowVersionEntity(
-            UUID workflowId,
-            int version,
-            String name,
-            JsonNode definition,
-            int schemaVersion,
-            String publishedBy,
-            Instant publishedAt) {
-        this.workflowId = workflowId;
-        this.version = version;
-        this.name = name;
-        this.definition = definition;
-        this.schemaVersion = schemaVersion;
-        this.publishedBy = publishedBy;
-        this.publishedAt = publishedAt;
-    }
-
-    public UUID getWorkflowId() {
-        return workflowId;
-    }
-
-    public int getVersion() {
-        return version;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public JsonNode getDefinition() {
-        return definition;
-    }
-
-    public String getPublishedBy() {
-        return publishedBy;
-    }
-
-    public Instant getPublishedAt() {
-        return publishedAt;
-    }
 }

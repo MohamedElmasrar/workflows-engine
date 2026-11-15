@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.function.BiFunction;
+import lombok.RequiredArgsConstructor;
 
 /**
  * Schedule semantics:
@@ -16,14 +17,10 @@ import java.util.function.BiFunction;
  *   <li>DST fall-back: a local time that occurs twice fires once, at its first occurrence.</li>
  * </ul>
  */
+@RequiredArgsConstructor
 public final class SchedulePolicy {
 
     private final BiFunction<String, ZonedDateTime, ZonedDateTime> nextAfter;
-
-    /** @param nextAfter cron evaluation function (expression, exclusive lower bound) → next fire time */
-    public SchedulePolicy(BiFunction<String, ZonedDateTime, ZonedDateTime> nextAfter) {
-        this.nextAfter = nextAfter;
-    }
 
     public Instant nextFireAfter(String cron, String timezone, Instant after) {
         ZonedDateTime base = after.atZone(ZoneId.of(timezone));

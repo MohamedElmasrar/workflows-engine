@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -50,15 +51,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/workflows")
 @Tag(name = "Workflows", description = "Workflow drafts, validation, publication and sharing")
+@RequiredArgsConstructor
 public class WorkflowController {
 
     private final WorkflowCommandService commands;
     private final WorkflowQueryService queries;
-
-    public WorkflowController(WorkflowCommandService commands, WorkflowQueryService queries) {
-        this.commands = commands;
-        this.queries = queries;
-    }
 
     @PostMapping
     @Operation(summary = "Create a workflow draft")

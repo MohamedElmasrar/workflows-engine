@@ -4,6 +4,8 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-6DB33F.svg?style=flat&logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
 [![Spring Cloud Gateway](https://img.shields.io/badge/Spring%20Cloud%20Gateway-2025.0-6DB33F.svg?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-cloud-gateway)
 [![Spring Security](https://img.shields.io/badge/Spring%20Security-OAuth2%20resource%20server-6DB33F.svg?style=flat&logo=springsecurity&logoColor=white)](https://spring.io/projects/spring-security)
+[![Lombok](https://img.shields.io/badge/Lombok-1.18-BC4521.svg?style=flat)](https://projectlombok.org)
+[![Spring Data JPA](https://img.shields.io/badge/Spring%20Data%20JPA-2025.0-6DB33F.svg?style=flat&logo=spring&logoColor=white)](https://spring.io/projects/spring-data-jpa)
 [![Hibernate](https://img.shields.io/badge/Hibernate-6.6-59666C.svg?style=flat&logo=hibernate&logoColor=white)](https://hibernate.org/orm/)
 [![Flyway](https://img.shields.io/badge/Flyway-migrations-CC0200.svg?style=flat&logo=flyway&logoColor=white)](https://flywaydb.org)
 [![Resilience4j](https://img.shields.io/badge/Resilience4j-circuit%20breaker-0B7BBE.svg?style=flat)](https://resilience4j.readme.io)
@@ -70,7 +72,7 @@ semantics, reliability, failure scenarios, limits), [engine components](docs/arc
 
 ## Technology
 
-Java 21, Spring Boot 3.5, Spring Security (OAuth2 resource server), Spring Data JPA/Hibernate, Flyway, Spring Kafka,
+Java 21, Spring Boot 3.5, Spring Security (OAuth2 resource server), Spring Data JPA/Hibernate, Lombok, Flyway, Spring Kafka,
 Spring Cloud Gateway 2025.0, Resilience4j, Micrometer + OpenTelemetry, PostgreSQL 17, Apache Kafka 4.1 (KRaft),
 Redis 7, Keycloak 26. Next.js 16, React 19, TypeScript (strict), Tailwind, shadcn/ui, React Flow 12, TanStack Query,
 Zustand, React Hook Form + Zod. Docker Compose, Helm, GitHub Actions, Prometheus, Grafana, OTel Collector, Jaeger.

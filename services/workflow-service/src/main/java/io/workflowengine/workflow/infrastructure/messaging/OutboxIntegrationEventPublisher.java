@@ -10,17 +10,15 @@ import io.workflowengine.workflow.application.port.out.IntegrationEventPublisher
 import io.workflowengine.workflow.domain.event.WorkflowDomainEvent;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /** Translates domain events into versioned integration events written to the transactional outbox. */
 @Component
+@RequiredArgsConstructor
 public class OutboxIntegrationEventPublisher implements IntegrationEventPublisher {
 
     private final OutboxWriter outbox;
-
-    public OutboxIntegrationEventPublisher(OutboxWriter outbox) {
-        this.outbox = outbox;
-    }
 
     @Override
     public void publish(List<WorkflowDomainEvent> events) {

@@ -7,9 +7,11 @@ import io.workflowengine.trigger.application.usecase.Authorization.Caller;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class TriggerQueryService {
 
     public record WebhookView(
@@ -25,19 +27,6 @@ public class TriggerQueryService {
     private final SecretProtector secrets;
     private final Authorization authorization;
     private final String publicBaseUrl;
-
-    public TriggerQueryService(
-            TriggerRepository triggers,
-            DeliveryRepository deliveries,
-            SecretProtector secrets,
-            Authorization authorization,
-            String publicBaseUrl) {
-        this.triggers = triggers;
-        this.deliveries = deliveries;
-        this.secrets = secrets;
-        this.authorization = authorization;
-        this.publicBaseUrl = publicBaseUrl;
-    }
 
     /** The webhook URL contains the secret token, so it is only shown to owners and editors. */
     public TriggersView triggers(UUID workflowId, Caller caller) {

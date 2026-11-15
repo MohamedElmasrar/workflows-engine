@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,13 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 /** Public, unauthenticated endpoint: the unguessable token (and optional HMAC signature) authenticate the caller. */
 @RestController
 @Tag(name = "Webhooks")
+@RequiredArgsConstructor
 public class WebhookController {
 
     private final WebhookService webhooks;
-
-    public WebhookController(WebhookService webhooks) {
-        this.webhooks = webhooks;
-    }
 
     public record WebhookAccepted(String deliveryId, String executionId, boolean duplicate) {}
 

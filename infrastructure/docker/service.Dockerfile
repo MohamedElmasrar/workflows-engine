@@ -8,6 +8,7 @@ WORKDIR /src
 # 1) poms only, so dependency resolution is cached until a pom changes
 COPY mvnw pom.xml ./
 COPY .mvn .mvn
+COPY lombok.config ./
 COPY packages/contracts/pom.xml packages/contracts/
 COPY packages/platform-support/pom.xml packages/platform-support/
 COPY services/api-gateway/pom.xml services/api-gateway/

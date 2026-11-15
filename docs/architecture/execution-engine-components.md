@@ -9,9 +9,9 @@ flowchart TB
   subgraph infrastructure
     KL[EngineKafkaListeners<br/>workflow events · requests · node results]
     SW[ExecutionSweeper<br/>timers, leases, pending starts]
-    REPO[JpaExecutionRepository<br/>aggregate ↔ tables, optimistic lock]
-    CAT[JdbcWorkflowCatalog<br/>version + ACL projections]
-    RM[JdbcExecutionReadModel<br/>lists, history, stats]
+    REPO[JpaExecutionRepository<br/>Spring Data JPA, aggregate ↔ tables, optimistic lock]
+    CAT[WorkflowCatalogAdapter<br/>version + ACL projections]
+    RM[ExecutionReadModelAdapter<br/>Specifications, history, stats]
     OUT[OutboxEffectPublisher]
     MET[MicrometerExecutionMetrics]
     TX[RetryingTransactionRunner]
@@ -45,3 +45,8 @@ flowchart TB
 
 One operation = one transaction: load aggregate (`OPTIMISTIC_FORCE_INCREMENT`), call one domain method with `now`,
 persist changed rows, append history entries, write outbox effects. Conflicts are retried up to five times.
+
+Persistence uses Spring Data JPA repositories with Lombok entities. SQL remains only where it is the correct tool:
+the sweeper's due-timer UNION over partial indexes, the JDBC batch insert of history rows, the dashboard
+`count(*) FILTER` aggregate, and the projection upserts (`INSERT ... ON CONFLICT ... WHERE revision < excluded`)
+that must be atomic under concurrent consumers.

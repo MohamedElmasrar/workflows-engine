@@ -7,8 +7,7 @@ import io.workflowengine.execution.application.usecase.ExecutionService;
 import java.time.Clock;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -19,9 +18,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @ConditionalOnProperty(value = "engine.sweeper.enabled", matchIfMissing = true)
+@Slf4j
 public class ExecutionSweeper {
-
-    private static final Logger log = LoggerFactory.getLogger(ExecutionSweeper.class);
     private static final int BATCH = 100;
 
     private final ExecutionRepository repository;

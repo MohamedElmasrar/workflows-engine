@@ -12,6 +12,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  * {@code schedule:<id>:<fireTime>}, so even two replicas racing on the same row cannot start two executions for one
  * fire time.
  */
+@RequiredArgsConstructor
 public class ScheduleService {
 
     private final TriggerRepository triggers;
@@ -27,21 +29,6 @@ public class ScheduleService {
     private final SchedulePolicy policy;
     private final ObjectMapper objectMapper;
     private final Clock clock;
-
-    public ScheduleService(
-            TriggerRepository triggers,
-            DeliveryRepository deliveries,
-            ExecutionRequestPublisher publisher,
-            SchedulePolicy policy,
-            ObjectMapper objectMapper,
-            Clock clock) {
-        this.triggers = triggers;
-        this.deliveries = deliveries;
-        this.publisher = publisher;
-        this.policy = policy;
-        this.objectMapper = objectMapper;
-        this.clock = clock;
-    }
 
     @Transactional
     public int fireDue(int limit) {

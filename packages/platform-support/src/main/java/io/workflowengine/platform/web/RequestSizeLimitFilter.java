@@ -8,19 +8,17 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
  * Rejects request bodies above a configured size with 413, whether or not a Content-Length is sent. Applied in every
  * service in addition to the gateway limit so services stay safe when called directly.
  */
+@RequiredArgsConstructor
 public class RequestSizeLimitFilter extends OncePerRequestFilter {
 
     private final long maxBytes;
-
-    public RequestSizeLimitFilter(long maxBytes) {
-        this.maxBytes = maxBytes;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

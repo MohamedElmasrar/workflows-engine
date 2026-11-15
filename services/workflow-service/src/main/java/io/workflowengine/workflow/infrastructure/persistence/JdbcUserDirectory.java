@@ -5,19 +5,16 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 @Repository
+@RequiredArgsConstructor
 public class JdbcUserDirectory implements UserDirectory {
 
     private final JdbcTemplate jdbc;
     private final AppUserJpaRepository users;
-
-    public JdbcUserDirectory(JdbcTemplate jdbc, AppUserJpaRepository users) {
-        this.jdbc = jdbc;
-        this.users = users;
-    }
 
     @Override
     public void remember(String userId, String username, String email) {

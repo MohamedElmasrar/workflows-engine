@@ -12,8 +12,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -31,9 +30,8 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  * of latency.
  */
 @RestController
+@Slf4j
 public class ExecutionStreamController {
-
-    private static final Logger log = LoggerFactory.getLogger(ExecutionStreamController.class);
 
     private final ExecutionQueryService queries;
     private final ScheduledExecutorService scheduler =

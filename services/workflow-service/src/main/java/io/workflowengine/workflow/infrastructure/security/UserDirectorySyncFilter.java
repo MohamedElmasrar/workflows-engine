@@ -8,8 +8,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
@@ -20,16 +20,12 @@ import org.springframework.web.filter.OncePerRequestFilter;
  * process lifetime; the set is bounded by the number of distinct users that call this instance.
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class UserDirectorySyncFilter extends OncePerRequestFilter {
-
-    private static final Logger log = LoggerFactory.getLogger(UserDirectorySyncFilter.class);
 
     private final UserDirectory users;
     private final Set<String> known = ConcurrentHashMap.newKeySet();
-
-    public UserDirectorySyncFilter(UserDirectory users) {
-        this.users = users;
-    }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)

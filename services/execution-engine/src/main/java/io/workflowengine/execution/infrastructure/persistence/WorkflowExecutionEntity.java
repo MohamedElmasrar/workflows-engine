@@ -8,74 +8,81 @@ import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 import java.time.Instant;
 import java.util.UUID;
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
 
+/** Root row of the execution aggregate. Its {@code version} is the aggregate's optimistic lock. */
 @Entity
 @Table(name = "workflow_execution")
+@Getter
+@Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class WorkflowExecutionEntity {
 
     @Id
-    UUID id;
+    @Setter(AccessLevel.NONE)
+    private UUID id;
 
     @Column(name = "workflow_id", nullable = false, updatable = false)
-    UUID workflowId;
+    private UUID workflowId;
 
     @Column(name = "workflow_version", nullable = false, updatable = false)
-    int workflowVersion;
+    private int workflowVersion;
 
     @Column(name = "workflow_name", nullable = false, updatable = false)
-    String workflowName;
+    private String workflowName;
 
     @Column(nullable = false)
-    String status;
+    private String status;
 
     @Column(name = "trigger_type", nullable = false, updatable = false)
-    String triggerType;
+    private String triggerType;
 
     @Column(name = "triggered_by", nullable = false, updatable = false)
-    String triggeredBy;
+    private String triggeredBy;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(nullable = false, updatable = false)
-    JsonNode input;
+    private JsonNode input;
 
     @JdbcTypeCode(SqlTypes.JSON)
-    JsonNode output;
+    private JsonNode output;
 
     @Column(name = "error_code")
-    String errorCode;
+    private String errorCode;
 
     @Column(name = "error_message")
-    String errorMessage;
+    private String errorMessage;
 
     @Column(name = "idempotency_key", updatable = false)
-    String idempotencyKey;
+    private String idempotencyKey;
 
     @Column(name = "retry_of", updatable = false)
-    UUID retryOf;
+    private UUID retryOf;
 
     @Column(name = "created_at", nullable = false, updatable = false)
-    Instant createdAt;
+    private Instant createdAt;
 
     @Column(name = "started_at")
-    Instant startedAt;
+    private Instant startedAt;
 
     @Column(name = "finished_at")
-    Instant finishedAt;
+    private Instant finishedAt;
 
     @Column(name = "deadline_at")
-    Instant deadlineAt;
+    private Instant deadlineAt;
 
     @Column(name = "event_sequence", nullable = false)
-    long eventSequence;
+    private long eventSequence;
 
-    /** Optimistic lock of the aggregate root; force-incremented on every modification of the execution. */
     @Version
+    @Setter(AccessLevel.NONE)
     @Column(nullable = false)
-    long version;
-
-    protected WorkflowExecutionEntity() {}
+    private long version;
 
     WorkflowExecutionEntity(UUID id) {
         this.id = id;

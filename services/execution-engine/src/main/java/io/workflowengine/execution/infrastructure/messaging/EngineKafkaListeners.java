@@ -22,8 +22,8 @@ import io.workflowengine.platform.messaging.MessageContext;
 import io.workflowengine.platform.messaging.NonRetryableMessageException;
 import java.util.HashMap;
 import java.util.Map;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
@@ -33,19 +33,13 @@ import org.springframework.stereotype.Component;
  * Exceptions propagate to the container error handler (back-off, then dead-letter topic).
  */
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class EngineKafkaListeners {
-
-    private static final Logger log = LoggerFactory.getLogger(EngineKafkaListeners.class);
 
     private final EventCodec codec;
     private final ExecutionService executions;
     private final WorkflowProjectionService projections;
-
-    public EngineKafkaListeners(EventCodec codec, ExecutionService executions, WorkflowProjectionService projections) {
-        this.codec = codec;
-        this.executions = executions;
-        this.projections = projections;
-    }
 
     @KafkaListener(topics = Topics.WORKFLOW_EVENTS, groupId = "execution-engine")
     public void onWorkflowEvent(String value) {

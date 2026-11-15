@@ -9,6 +9,7 @@ import io.workflowengine.trigger.application.usecase.TriggerRegistrationService;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,18 +18,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequiredArgsConstructor
 public class TriggerController {
 
     private final TriggerQueryService queries;
     private final TriggerRegistrationService registrations;
     private final Authorization authorization;
-
-    public TriggerController(
-            TriggerQueryService queries, TriggerRegistrationService registrations, Authorization authorization) {
-        this.queries = queries;
-        this.registrations = registrations;
-        this.authorization = authorization;
-    }
 
     @GetMapping("/api/v1/workflows/{workflowId}/triggers")
     public TriggerQueryService.TriggersView triggers(Authentication auth, @PathVariable UUID workflowId) {

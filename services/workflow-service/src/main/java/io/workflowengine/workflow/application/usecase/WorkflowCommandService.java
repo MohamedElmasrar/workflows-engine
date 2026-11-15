@@ -18,6 +18,7 @@ import io.workflowengine.workflow.domain.model.WorkflowVersion;
 import io.workflowengine.workflow.domain.service.ValidationResult;
 import java.time.Clock;
 import java.util.UUID;
+import lombok.RequiredArgsConstructor;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -25,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
  * together. Authorization is enforced by the aggregate through {@code WorkflowAccessPolicy}.
  */
 @Transactional
+@RequiredArgsConstructor
 public class WorkflowCommandService {
 
     private final WorkflowRepository workflows;
@@ -33,21 +35,6 @@ public class WorkflowCommandService {
     private final IntegrationEventPublisher events;
     private final UserDirectory users;
     private final Clock clock;
-
-    public WorkflowCommandService(
-            WorkflowRepository workflows,
-            WorkflowVersionRepository versions,
-            WorkflowValidation validation,
-            IntegrationEventPublisher events,
-            UserDirectory users,
-            Clock clock) {
-        this.workflows = workflows;
-        this.versions = versions;
-        this.validation = validation;
-        this.events = events;
-        this.users = users;
-        this.clock = clock;
-    }
 
     public Workflow create(Actor actor, CreateWorkflow command) {
         WorkflowDefinition draft = null;

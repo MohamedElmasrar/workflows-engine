@@ -15,72 +15,61 @@ import io.workflowengine.execution.domain.model.NodeStatus;
 import io.workflowengine.execution.domain.model.TriggerType;
 import io.workflowengine.execution.domain.model.WorkflowExecution;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.LockModeType;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 /**
- * Maps the {@link WorkflowExecution} aggregate to its tables. Entities are loaded explicitly (no JPA associations), so
- * the aggregate is always read with three queries regardless of its size, and only changed rows are updated.
+ * Maps the {@link WorkflowExecution} aggregate to its tables with Spring Data JPA. An aggregate is always read with
+ * three queries (root, nodes, attempts) regardless of its size. Two things deliberately stay outside Spring Data:
+ * <ul>
+ *   <li>new rows are inserted with {@link EntityManager#persist}, because the ids are assigned by the domain and
+ *       {@code save()} would issue a SELECT before every insert;</li>
+ *   <li>{@link #findDue} and {@link #appendHistory} use SQL (a UNION over partial indexes and a JDBC batch insert).</li>
+ * </ul>
  */
 @Repository
+@RequiredArgsConstructor
 public class JpaExecutionRepository implements ExecutionRepository {
 
     private static final int MAX_TEXT = 2000;
 
+    private final WorkflowExecutionJpaRepository executions;
+    private final NodeExecutionJpaRepository nodes;
+    private final NodeAttemptJpaRepository attempts;
     private final EntityManager em;
     private final JdbcTemplate jdbc;
     private final WorkflowCatalog catalog;
     private final EngineSettings settings;
     private final ObjectMapper objectMapper;
 
-    public JpaExecutionRepository(
-            EntityManager em,
-            JdbcTemplate jdbc,
-            WorkflowCatalog catalog,
-            EngineSettings settings,
-            ObjectMapper objectMapper) {
-        this.em = em;
-        this.jdbc = jdbc;
-        this.catalog = catalog;
-        this.settings = settings;
-        this.objectMapper = objectMapper;
-    }
-
     @Override
     public Optional<WorkflowExecution> loadForUpdate(UUID id) {
-        return Optional.ofNullable(em.find(WorkflowExecutionEntity.class, id, LockModeType.OPTIMISTIC_FORCE_INCREMENT))
-                .map(this::toDomain);
+        return executions.findForUpdateById(id).map(this::toDomain);
     }
 
     @Override
     public Optional<WorkflowExecution> find(UUID id) {
-        return Optional.ofNullable(em.find(WorkflowExecutionEntity.class, id)).map(this::toDomain);
+        return executions.findById(id).map(this::toDomain);
     }
 
     @Override
     public boolean exists(UUID id) {
-        return Boolean.TRUE.equals(
-                jdbc.queryForObject("select exists(select 1 from workflow_execution where id = ?)", Boolean.class, id));
+        return executions.existsById(id);
     }
 
     @Override
     public Optional<UUID> findIdByIdempotencyKey(UUID workflowId, String key) {
-        return jdbc
-                .query(
-                        "select id from workflow_execution where workflow_id = ? and idempotency_key = ?",
-                        (rs, i) -> rs.getObject(1, UUID.class),
-                        workflowId,
-                        key)
-                .stream()
-                .findFirst();
+        return executions.findIdByIdempotencyKey(workflowId, key);
     }
 
     @Override
@@ -93,34 +82,34 @@ public class JpaExecutionRepository implements ExecutionRepository {
             copyNode(node, entity);
             em.persist(entity);
         }
-        em.flush();
-        syncAttempts(execution);
-        em.flush();
+        syncAttempts(execution, Map.of());
+        em.flush(); // history rows reference the execution and are written with JDBC
         appendHistory(execution.id(), execution.pullHistory());
     }
 
     @Override
     public void update(WorkflowExecution execution) {
-        WorkflowExecutionEntity root = em.find(WorkflowExecutionEntity.class, execution.id());
-        copyRoot(execution, root);
-        Map<String, NodeExecutionEntity> entities = nodeEntities(execution.id());
+        // all three lookups hit the persistence context populated by loadForUpdate
+        copyRoot(execution, executions.findById(execution.id()).orElseThrow());
+        Map<String, NodeExecutionEntity> nodeEntities = nodes.findByExecutionId(execution.id()).stream()
+                .collect(Collectors.toMap(NodeExecutionEntity::getNodeId, Function.identity()));
         for (NodeExecution node : execution.nodes()) {
-            copyNode(node, entities.get(node.nodeId()));
+            copyNode(node, nodeEntities.get(node.nodeId()));
         }
-        syncAttempts(execution);
+        syncAttempts(
+                execution,
+                attempts.findByExecutionIdOrderByAttemptNumber(execution.id()).stream()
+                        .collect(Collectors.toMap(NodeAttemptEntity::getAttemptId, Function.identity())));
         em.flush();
         appendHistory(execution.id(), execution.pullHistory());
     }
 
     @Override
     public long countRunning(UUID workflowId) {
-        Long count = jdbc.queryForObject(
-                "select count(*) from workflow_execution where workflow_id = ? and status = 'RUNNING'",
-                Long.class,
-                workflowId);
-        return count == null ? 0 : count;
+        return executions.countByWorkflowIdAndStatus(workflowId, ExecutionStatus.RUNNING.name());
     }
 
+    /** Native SQL: one round trip over four partial indexes (see V1 migration). */
     @Override
     public List<UUID> findDue(Instant now, int limit) {
         Timestamp ts = Timestamp.from(now);
@@ -146,140 +135,126 @@ public class JpaExecutionRepository implements ExecutionRepository {
 
     @Override
     public List<UUID> findPending(int limit) {
-        return jdbc.query(
-                "select id from workflow_execution where status = 'PENDING' order by created_at limit ?",
-                (rs, i) -> rs.getObject(1, UUID.class),
-                limit);
+        return executions.findIdsByStatusOldestFirst(ExecutionStatus.PENDING.name(), PageRequest.of(0, limit));
     }
 
     @Override
     public long countActive() {
-        Long count = jdbc.queryForObject(
-                "select count(*) from workflow_execution where status in ('PENDING', 'RUNNING')", Long.class);
-        return count == null ? 0 : count;
+        return executions.countByStatusIn(List.of(ExecutionStatus.PENDING.name(), ExecutionStatus.RUNNING.name()));
     }
 
     // ------------------------------------------------------------------ mapping
 
     private WorkflowExecution toDomain(WorkflowExecutionEntity e) {
-        ExecutionGraph graph = ExecutionGraph.parse(catalog.version(e.workflowId, e.workflowVersion)
-                .orElseThrow(() ->
-                        new IllegalStateException("Missing version snapshot " + e.workflowId + "@" + e.workflowVersion))
+        ExecutionGraph graph = ExecutionGraph.parse(catalog.version(e.getWorkflowId(), e.getWorkflowVersion())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Missing version snapshot " + e.getWorkflowId() + "@" + e.getWorkflowVersion()))
                 .definition());
-        Map<String, List<NodeAttemptEntity>> attempts = em.createQuery(
-                        "select a from NodeAttemptEntity a where a.executionId = :id order by a.attemptNumber",
-                        NodeAttemptEntity.class)
-                .setParameter("id", e.id)
-                .getResultStream()
-                .collect(Collectors.groupingBy(a -> a.nodeId));
-        Map<String, NodeExecutionEntity> nodeEntities = nodeEntities(e.id);
-        List<NodeExecution> nodes = graph.nodes().stream()
-                .map(n -> toDomain(nodeEntities.get(n.id()), attempts.getOrDefault(n.id(), List.of())))
+        Map<String, List<NodeAttemptEntity>> attemptsByNode =
+                attempts.findByExecutionIdOrderByAttemptNumber(e.getId()).stream()
+                        .collect(Collectors.groupingBy(NodeAttemptEntity::getNodeId));
+        Map<String, NodeExecutionEntity> nodeEntities = nodes.findByExecutionId(e.getId()).stream()
+                .collect(Collectors.toMap(NodeExecutionEntity::getNodeId, Function.identity()));
+        List<NodeExecution> nodeList = graph.nodes().stream()
+                .map(n -> toDomain(nodeEntities.get(n.id()), attemptsByNode.getOrDefault(n.id(), List.of())))
                 .toList();
         WorkflowExecution.State state = new WorkflowExecution.State(
-                e.id,
-                e.workflowId,
-                e.workflowVersion,
-                e.workflowName,
-                ExecutionStatus.valueOf(e.status),
-                TriggerType.valueOf(e.triggerType),
-                e.triggeredBy,
-                e.input,
-                e.output,
-                e.errorCode == null ? null : new ExecutionError(e.errorCode, e.errorMessage),
-                e.idempotencyKey,
-                e.retryOf,
-                e.createdAt,
-                e.startedAt,
-                e.finishedAt,
-                e.deadlineAt,
-                e.eventSequence);
-        return WorkflowExecution.restore(state, graph, nodes, settings);
+                e.getId(),
+                e.getWorkflowId(),
+                e.getWorkflowVersion(),
+                e.getWorkflowName(),
+                ExecutionStatus.valueOf(e.getStatus()),
+                TriggerType.valueOf(e.getTriggerType()),
+                e.getTriggeredBy(),
+                e.getInput(),
+                e.getOutput(),
+                e.getErrorCode() == null ? null : new ExecutionError(e.getErrorCode(), e.getErrorMessage()),
+                e.getIdempotencyKey(),
+                e.getRetryOf(),
+                e.getCreatedAt(),
+                e.getStartedAt(),
+                e.getFinishedAt(),
+                e.getDeadlineAt(),
+                e.getEventSequence());
+        return WorkflowExecution.restore(state, graph, nodeList, settings);
     }
 
     private static NodeExecution toDomain(NodeExecutionEntity n, List<NodeAttemptEntity> attempts) {
         return new NodeExecution(
-                n.nodeId,
-                n.nodeType,
-                NodeStatus.valueOf(n.status),
-                n.attemptCount,
-                n.currentAttemptId,
-                n.availableAt,
-                n.leaseExpiresAt,
-                n.resumeAt,
-                n.input,
-                n.output,
-                n.branch,
-                n.errorCode == null
+                n.getNodeId(),
+                n.getNodeType(),
+                NodeStatus.valueOf(n.getStatus()),
+                n.getAttemptCount(),
+                n.getCurrentAttemptId(),
+                n.getAvailableAt(),
+                n.getLeaseExpiresAt(),
+                n.getResumeAt(),
+                n.getInput(),
+                n.getOutput(),
+                n.getBranch(),
+                n.getErrorCode() == null
                         ? null
-                        : new NodeFailure(n.errorCode, n.errorMessage, Boolean.TRUE.equals(n.errorRetryable)),
-                n.startedAt,
-                n.finishedAt,
+                        : new NodeFailure(
+                                n.getErrorCode(), n.getErrorMessage(), Boolean.TRUE.equals(n.getErrorRetryable())),
+                n.getStartedAt(),
+                n.getFinishedAt(),
                 attempts.stream()
                         .map(a -> new NodeAttempt(
-                                a.attemptId,
-                                a.attemptNumber,
-                                NodeAttempt.Status.valueOf(a.status),
-                                a.dispatchedAt,
-                                a.leaseExpiresAt,
-                                a.startedAt,
-                                a.finishedAt,
-                                a.workerId,
-                                a.errorCode,
-                                a.errorMessage))
+                                a.getAttemptId(),
+                                a.getAttemptNumber(),
+                                NodeAttempt.Status.valueOf(a.getStatus()),
+                                a.getDispatchedAt(),
+                                a.getLeaseExpiresAt(),
+                                a.getStartedAt(),
+                                a.getFinishedAt(),
+                                a.getWorkerId(),
+                                a.getErrorCode(),
+                                a.getErrorMessage()))
                         .toList());
-    }
-
-    private Map<String, NodeExecutionEntity> nodeEntities(UUID executionId) {
-        return em.createQuery(
-                        "select n from NodeExecutionEntity n where n.executionId = :id", NodeExecutionEntity.class)
-                .setParameter("id", executionId)
-                .getResultStream()
-                .collect(Collectors.toMap(n -> n.nodeId, n -> n));
     }
 
     private static void copyRoot(WorkflowExecution execution, WorkflowExecutionEntity e) {
         WorkflowExecution.State s = execution.state();
-        e.workflowId = s.workflowId();
-        e.workflowVersion = s.workflowVersion();
-        e.workflowName = s.workflowName();
-        e.status = s.status().name();
-        e.triggerType = s.triggerType().name();
-        e.triggeredBy = s.triggeredBy();
-        e.input = s.input();
-        e.output = s.output();
-        e.errorCode = s.error() == null ? null : s.error().code();
-        e.errorMessage = s.error() == null ? null : truncate(s.error().message());
-        e.idempotencyKey = s.idempotencyKey();
-        e.retryOf = s.retryOf();
-        e.createdAt = s.createdAt();
-        e.startedAt = s.startedAt();
-        e.finishedAt = s.finishedAt();
-        e.deadlineAt = s.deadlineAt();
-        e.eventSequence = s.eventSequence();
+        e.setWorkflowId(s.workflowId());
+        e.setWorkflowVersion(s.workflowVersion());
+        e.setWorkflowName(s.workflowName());
+        e.setStatus(s.status().name());
+        e.setTriggerType(s.triggerType().name());
+        e.setTriggeredBy(s.triggeredBy());
+        e.setInput(s.input());
+        e.setOutput(s.output());
+        e.setErrorCode(s.error() == null ? null : s.error().code());
+        e.setErrorMessage(s.error() == null ? null : truncate(s.error().message()));
+        e.setIdempotencyKey(s.idempotencyKey());
+        e.setRetryOf(s.retryOf());
+        e.setCreatedAt(s.createdAt());
+        e.setStartedAt(s.startedAt());
+        e.setFinishedAt(s.finishedAt());
+        e.setDeadlineAt(s.deadlineAt());
+        e.setEventSequence(s.eventSequence());
     }
 
     private static void copyNode(NodeExecution n, NodeExecutionEntity e) {
-        e.status = n.status().name();
-        e.attemptCount = n.attemptCount();
-        e.currentAttemptId = n.currentAttemptId();
-        e.availableAt = n.availableAt();
-        e.leaseExpiresAt = n.leaseExpiresAt();
-        e.resumeAt = n.resumeAt();
-        e.input = n.input();
-        e.output = n.output();
-        e.branch = n.branch();
-        e.errorCode = n.error() == null ? null : n.error().code();
-        e.errorMessage = n.error() == null ? null : truncate(n.error().message());
-        e.errorRetryable = n.error() == null ? null : n.error().retryable();
-        e.startedAt = n.startedAt();
-        e.finishedAt = n.finishedAt();
+        e.setStatus(n.status().name());
+        e.setAttemptCount(n.attemptCount());
+        e.setCurrentAttemptId(n.currentAttemptId());
+        e.setAvailableAt(n.availableAt());
+        e.setLeaseExpiresAt(n.leaseExpiresAt());
+        e.setResumeAt(n.resumeAt());
+        e.setInput(n.input());
+        e.setOutput(n.output());
+        e.setBranch(n.branch());
+        e.setErrorCode(n.error() == null ? null : n.error().code());
+        e.setErrorMessage(n.error() == null ? null : truncate(n.error().message()));
+        e.setErrorRetryable(n.error() == null ? null : n.error().retryable());
+        e.setStartedAt(n.startedAt());
+        e.setFinishedAt(n.finishedAt());
     }
 
-    private void syncAttempts(WorkflowExecution execution) {
+    private void syncAttempts(WorkflowExecution execution, Map<UUID, NodeAttemptEntity> existing) {
         for (NodeExecution node : execution.nodes()) {
             for (NodeAttempt attempt : node.attempts()) {
-                NodeAttemptEntity entity = em.find(NodeAttemptEntity.class, attempt.attemptId());
+                NodeAttemptEntity entity = existing.get(attempt.attemptId());
                 boolean isNew = entity == null;
                 if (isNew) {
                     entity = new NodeAttemptEntity(
@@ -289,20 +264,21 @@ public class JpaExecutionRepository implements ExecutionRepository {
                             attempt.number(),
                             attempt.dispatchedAt());
                 }
-                entity.status = attempt.status().name();
-                entity.workerId = attempt.workerId();
-                entity.leaseExpiresAt = attempt.leaseExpiresAt();
-                entity.startedAt = attempt.startedAt();
-                entity.finishedAt = attempt.finishedAt();
-                entity.errorCode = attempt.errorCode();
-                entity.errorMessage = truncate(attempt.errorMessage());
+                entity.setStatus(attempt.status().name());
+                entity.setWorkerId(attempt.workerId());
+                entity.setLeaseExpiresAt(attempt.leaseExpiresAt());
+                entity.setStartedAt(attempt.startedAt());
+                entity.setFinishedAt(attempt.finishedAt());
+                entity.setErrorCode(attempt.errorCode());
+                entity.setErrorMessage(truncate(attempt.errorMessage()));
                 if (isNew) {
-                    em.persist(entity); // state is captured at persist time, so populate first
+                    em.persist(entity); // insert state is captured at persist time, so populate first
                 }
             }
         }
     }
 
+    /** JDBC batch insert: history rows are append-only and written several at a time per transaction. */
     private void appendHistory(UUID executionId, List<ExecutionHistoryEntry> entries) {
         if (entries.isEmpty()) {
             return;

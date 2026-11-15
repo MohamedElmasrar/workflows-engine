@@ -17,8 +17,8 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -27,9 +27,9 @@ import org.springframework.transaction.annotation.Transactional;
  * versions so external callers do not need to be reconfigured.
  */
 @Transactional
+@Slf4j
+@RequiredArgsConstructor
 public class TriggerRegistrationService {
-
-    private static final Logger log = LoggerFactory.getLogger(TriggerRegistrationService.class);
     public static final String CONSUMER = "workflow-events";
 
     private final TriggerRepository triggers;
@@ -40,23 +40,6 @@ public class TriggerRegistrationService {
     private final SchedulePolicy schedules;
     private final Clock clock;
     private final SecureRandom random = new SecureRandom();
-
-    public TriggerRegistrationService(
-            TriggerRepository triggers,
-            AccessRepository access,
-            DeliveryRepository deliveries,
-            SecretProtector secrets,
-            MessageDeduplicator dedup,
-            SchedulePolicy schedules,
-            Clock clock) {
-        this.triggers = triggers;
-        this.access = access;
-        this.deliveries = deliveries;
-        this.secrets = secrets;
-        this.dedup = dedup;
-        this.schedules = schedules;
-        this.clock = clock;
-    }
 
     public void onVersionPublished(UUID eventId, UUID workflowId, int version, JsonNode definition) {
         if (!dedup.firstDelivery(CONSUMER, eventId)) {

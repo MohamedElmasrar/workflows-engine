@@ -2,6 +2,7 @@ package io.workflowengine.worker.infrastructure.http;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import lombok.RequiredArgsConstructor;
 import org.apache.hc.client5.http.DnsResolver;
 import org.apache.hc.client5.http.SystemDefaultDnsResolver;
 
@@ -9,14 +10,11 @@ import org.apache.hc.client5.http.SystemDefaultDnsResolver;
  * Resolves host names and rejects any result that the {@link SsrfPolicy} blocks. Because the HTTP client connects to
  * exactly the addresses returned here, a DNS-rebinding answer cannot slip past an earlier check.
  */
+@RequiredArgsConstructor
 public class GuardedDnsResolver implements DnsResolver {
 
     private final SsrfPolicy policy;
     private final DnsResolver delegate = SystemDefaultDnsResolver.INSTANCE;
-
-    public GuardedDnsResolver(SsrfPolicy policy) {
-        this.policy = policy;
-    }
 
     @Override
     public InetAddress[] resolve(String host) throws UnknownHostException {

@@ -1,7 +1,7 @@
 /** "Show last run" overlay: loads the latest execution of the workflow and maps node ids to their status. */
 import { useMemo, useState } from "react";
 import type { NodeStatus } from "@/lib/api/types";
-import { useLatestExecution } from "@/features/executions/hooks";
+import { useLatestExecution } from "@/features/executions/hooks/execution-queries";
 
 export function useLastRun(workflowId: string) {
   const [enabled, setEnabled] = useState(false);

@@ -1,5 +1,4 @@
 /** Copy-paste curl example that sends a correctly signed webhook (HMAC-SHA256 over timestamp + body). */
-import { Webhook } from "lucide-react";
 
 export function signatureExample(url: string, secret: string): string {
   return [

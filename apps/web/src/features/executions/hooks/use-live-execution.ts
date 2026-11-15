@@ -1,68 +1,13 @@
-"use client";
-
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+/** Loads an execution with its history and follows the SSE event stream until the run ends. */
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { buildUrl } from "@/lib/api/client";
 import { api } from "@/lib/api/endpoints";
-import { queryKeys, type ExecutionListParams } from "@/lib/api/query-keys";
-import { isTerminalExecution, type Execution, type HistoryEntry } from "@/lib/api/types";
+import { queryKeys } from "@/lib/api/query-keys";
+import { type HistoryEntry, isTerminalExecution } from "@/lib/api/types";
 import { getAccessToken, notifyUnauthorized } from "@/lib/auth/session";
 import { connectSse } from "@/lib/sse/connect";
-
-export function useExecutionList(params: ExecutionListParams) {
-  return useQuery({
-    queryKey: queryKeys.executions.list(params),
-    queryFn: ({ signal }) => api.listExecutions(params, signal),
-    placeholderData: keepPreviousData,
-  });
-}
-
-export function useExecutionStats() {
-  return useQuery({ queryKey: queryKeys.executions.stats, queryFn: api.executionStats, refetchInterval: 15_000 });
-}
-
-export function useExecution(id: string | null, options: { refetchWhileActive?: boolean } = {}) {
-  return useQuery({
-    queryKey: queryKeys.executions.detail(id ?? ""),
-    queryFn: ({ signal }) => api.getExecution(id as string, signal),
-    enabled: Boolean(id),
-    refetchInterval: (query) =>
-      options.refetchWhileActive && query.state.data && !isTerminalExecution(query.state.data.status) ? 3000 : false,
-  });
-}
-
-/** Latest execution of a workflow (for the editor's "Show last run" overlay). */
-export function useLatestExecution(workflowId: string, enabled: boolean) {
-  const latest = useQuery({
-    queryKey: queryKeys.executions.latestForWorkflow(workflowId),
-    queryFn: async () => (await api.listExecutions({ workflowId, size: 1, page: 0 })).items[0] ?? null,
-    enabled,
-  });
-  const detail = useExecution(enabled ? (latest.data?.id ?? null) : null, { refetchWhileActive: true });
-  return { latest, detail };
-}
-
-export function useCancelExecution(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => api.cancelExecution(id),
-    onSuccess: (execution) => {
-      qc.setQueryData(queryKeys.executions.detail(id), execution);
-      void qc.invalidateQueries({ queryKey: ["executions", "list"] });
-    },
-  });
-}
-
-export function useRetryExecution(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: () => api.retryExecution(id),
-    onSuccess: (execution) => {
-      qc.setQueryData(queryKeys.executions.detail(execution.id), execution);
-      void qc.invalidateQueries({ queryKey: ["executions", "list"] });
-    },
-  });
-}
+import { useExecution } from "./execution-queries";
 
 function mergeEntries(existing: HistoryEntry[] | undefined, incoming: HistoryEntry[]): HistoryEntry[] {
   const bySequence = new Map<number, HistoryEntry>();
@@ -154,8 +99,4 @@ export function useLiveExecution(id: string) {
 
   const effectiveState: LiveState = alreadyComplete ? "ended" : shouldStream && liveState === "idle" ? "connecting" : liveState;
   return { execution, events, liveState: effectiveState };
-}
-
-export function isActive(execution: Execution | undefined): boolean {
-  return Boolean(execution && !isTerminalExecution(execution.status));
 }

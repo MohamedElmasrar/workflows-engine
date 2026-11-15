@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDuration, humanize } from "@/lib/format";
 import { useAuth } from "@/lib/auth/auth-provider";
-import { useExecutionStats } from "@/features/executions/hooks";
+import { useExecutionStats } from "@/features/executions/hooks/execution-queries";
 import { useWorkflowStats } from "@/features/workflows/hooks";
 
 function StatCard({ title, value, icon, loading, href, tone }: {

@@ -11,7 +11,7 @@ import { LoadingState } from "@/components/loading-state";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { ExecutionGraph } from "@/features/executions/execution-graph";
+import { ExecutionGraph } from "@/features/executions/components/execution-graph";
 import { useWorkflowVersion, useWorkflowVersions } from "@/features/workflows/hooks";
 import { useEditorStore } from "@/stores/editor/editor-store";
 
